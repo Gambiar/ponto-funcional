@@ -58,10 +58,14 @@ class Cenario:
     falha_em: float | None = None  # segundo do degrau em que o banco "cai"
     falha_seg: float = 10.0
     parar_apos: int = 2          # para a rampa após N degraus seguidos com erro
+    tolerancia: float = 1e-4     # taxa máxima de erro de integridade aceita no limite (C5)
+    atraso_max_ms: float = 20.0  # acima disso o gerador não cumpriu a agenda: degrau inválido (C3)
     extra: dict = field(default_factory=dict)
 
 
 # Cenários do artigo. Ajuste as taxas conforme a máquina.
+# Falhas: com 8 tentativas o backoff acumula 16,2 s, então a queda de 10 s é coberta
+# por construção; variar a duração mostra onde o retry deixa de bastar (C8).
 SUITE_PADRAO = [
     Cenario("baseline", modo="baseline"),
     Cenario("lote_50", lote=50),
@@ -69,6 +73,11 @@ SUITE_PADRAO = [
     Cenario("lote_1000", lote=1000),
     Cenario("falha_com_retry", taxas=(500,), duracao=30, falha_em=5),
     Cenario("falha_sem_retry", taxas=(500,), duracao=30, falha_em=5, tentativas=1),
+    Cenario("falha_com_retry_20s", taxas=(500,), duracao=45, falha_em=5, falha_seg=20.0),
+    Cenario("falha_com_retry_30s", taxas=(500,), duracao=55, falha_em=5, falha_seg=30.0),
+    # grupo de comparação: no baseline o cliente recebe 503 e sabe que deve reenviar (C7)
+    Cenario("falha_baseline_com_retry", modo="baseline", taxas=(500,), duracao=30, falha_em=5),
+    Cenario("falha_baseline_sem_retry", modo="baseline", taxas=(500,), duracao=30, falha_em=5, tentativas=1),
 ]
 
 
@@ -140,20 +149,30 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
     avaliacoes = reconciliar(registros, base.gabarito, envios, banco, regras_padrao(frozenset(range(1, n_servidores + 1))))
 
     lat_ok = [e.latencia for e in envios if e.status in SUCESSO]
+    lat_todas = [e.latencia for e in envios]  # inclui timeouts e erros (C4)
     atrasos = [e.t_envio - e.t_agendado for e in envios]
+    # taxa de ENVIO: até o último envio, sem esperar respostas (C2)
+    ultimo_envio = max((e.t_envio for e in envios), default=0.0)
+    atraso_p99 = round(percentil(atrasos, 99) * 1000, 1)
+    contagens = resumir(avaliacoes)
     resumo = {
         "cenario": c.nome,
+        "seed": c.seed,
         "taxa_alvo": taxa,
-        "taxa_obtida": round(len(envios) / duracao_envio, 1),
-        "atraso_gerador_p99_ms": round(percentil(atrasos, 99) * 1000, 1),
+        "taxa_obtida": round(len(envios) / ultimo_envio, 1) if ultimo_envio else 0.0,
+        "atraso_gerador_p99_ms": atraso_p99,
+        "gerador_valido": atraso_p99 <= c.atraso_max_ms,
+        "duracao_envio_s": round(duracao_envio, 1),
         "duracao_ate_drenar_s": round(duracao_total, 1),
         "lat_p50_ms": round(percentil(lat_ok, 50) * 1000, 1),
         "lat_p95_ms": round(percentil(lat_ok, 95) * 1000, 1),
         "lat_p99_ms": round(percentil(lat_ok, 99) * 1000, 1),
+        "lat_p99_todas_ms": round(percentil(lat_todas, 99) * 1000, 1),
         "lote_medio": estado["lote_medio"],
         "retries": estado["retries"],
         "perdidos_servidor": estado["registros_perdidos"],
-        **resumir(avaliacoes),
+        **contagens,
+        **avaliar_degrau(contagens, c.tolerancia),
     }
 
     _escrever_csv(pasta / f"envios_{taxa}.csv", [asdict(e) for e in envios])
@@ -172,10 +191,26 @@ def _imprimir(r: dict) -> None:
           f"integr {r['integridade']:.4f} | {erros or 'sem erros'}", flush=True)
 
 
-def limite_sem_erros(resumos: list[dict]) -> int | None:
-    """Maior taxa antes do primeiro degrau com erro."""
-    ok = list(takewhile(lambda r: r["sem_erros"], sorted(resumos, key=lambda r: r["taxa_alvo"])))
+def avaliar_degrau(contagens: dict, tolerancia: float) -> dict[str, bool]:
+    """Separa os critérios (C5): carga (nada recusado/perdido no caminho) e
+    integridade (erros estruturais zero e taxa total dentro da tolerância)."""
+    return {
+        "ok_carga": contagens["erros_de_carga"] == 0,
+        "ok_integridade": contagens["erros_de_integridade_sem_ordem"] == 0
+        and contagens["taxa_erro_integridade"] <= tolerancia,
+    }
+
+
+def limite(resumos: list[dict], criterio: str = "sem_erros") -> int | None:
+    """Maior taxa antes do primeiro degrau que falha no critério.
+    Degraus em que o gerador não cumpriu a agenda encerram a contagem (C3)."""
+    ordenados = sorted(resumos, key=lambda r: r["taxa_alvo"])
+    ok = list(takewhile(lambda r: r.get("gerador_valido", True) and r[criterio], ordenados))
     return ok[-1]["taxa_alvo"] if ok else None
+
+
+def limite_sem_erros(resumos: list[dict]) -> int | None:
+    return limite(resumos, "sem_erros")
 
 
 async def rodar_cenario(c: Cenario, raiz: Path) -> list[dict]:
@@ -189,7 +224,8 @@ async def rodar_cenario(c: Cenario, raiz: Path) -> list[dict]:
         r = await rodar_degrau(c, taxa, pasta)
         resumos.append(r)
         _imprimir(r)
-        falhas_seguidas = 0 if r["sem_erros"] else falhas_seguidas + 1
+        passou = r["ok_carga"] and r["ok_integridade"] and r["gerador_valido"]
+        falhas_seguidas = 0 if passou else falhas_seguidas + 1
         if c.falha_em is None and falhas_seguidas >= c.parar_apos:
             print("  rampa interrompida: limite ultrapassado")
             break
@@ -197,8 +233,10 @@ async def rodar_cenario(c: Cenario, raiz: Path) -> list[dict]:
     # colunas n_* variam entre degraus: une todas
     colunas = list(dict.fromkeys(k for r in resumos for k in r))
     _escrever_csv(pasta / "resumo.csv", [{k: r.get(k, 0) for k in colunas} for r in resumos])
-    limite = limite_sem_erros(resumos)
-    print(f"  limite sem erros: {limite} req/s" if limite else "  nenhum degrau sem erros")
+    for criterio in ("sem_erros", "ok_carga", "ok_integridade"):
+        print(f"  limite ({criterio}): {limite(resumos, criterio)} req/s")
+    if not all(r["gerador_valido"] for r in resumos):
+        print(f"  atenção: gerador atrasou mais de {c.atraso_max_ms} ms em algum degrau (degrau inválido)")
     return resumos
 
 
@@ -218,20 +256,38 @@ def main() -> None:
     p.add_argument("--escala", type=float, default=1.0,
                    help="multiplica as taxas da suíte (ex.: 0.5 em máquinas modestas)")
     p.add_argument("--saida", type=Path, default=Path("resultados"))
+    p.add_argument("--repeticoes", type=int, default=1,
+                   help="repete tudo com sementes diferentes, em <saida>/rep_<k> (C9)")
+    p.add_argument("--duracao-suite", type=int, default=None,
+                   help="sobrescreve a duração dos degraus de rampa da suíte (ex.: 60)")
+    p.add_argument("--tolerancia", type=float, default=1e-4)
+    p.add_argument("--atraso-max", type=float, default=20.0, help="atraso p99 máximo do gerador (ms)")
     a = p.parse_args()
 
     if a.suite:
         cenarios = [replace(c, taxas=tuple(max(1, int(t * a.escala)) for t in c.taxas)) for c in SUITE_PADRAO]
+        if a.duracao_suite:
+            cenarios = [replace(c, duracao=a.duracao_suite) if c.falha_em is None else c for c in cenarios]
     else:
         cenarios = [Cenario(
             a.cenario, a.modo, a.lote, a.espera, a.tentativas,
             tuple(int(t) for t in a.taxas.split(",")), a.duracao, a.anomalias,
             falha_em=a.falha_em, falha_seg=a.falha_seg,
         )]
+    cenarios = [replace(c, tolerancia=a.tolerancia, atraso_max_ms=a.atraso_max) for c in cenarios]
+
+    def rodadas():
+        if a.repeticoes == 1:
+            yield a.saida, cenarios
+            return
+        for k in range(1, a.repeticoes + 1):
+            yield a.saida / f"rep_{k}", [replace(c, seed=c.seed + 1000 * k) for c in cenarios]
 
     async def tudo():
-        for c in cenarios:
-            await rodar_cenario(c, a.saida)
+        for saida, lista in rodadas():
+            print(f"\n######## {saida}")
+            for c in lista:
+                await rodar_cenario(c, saida)
 
     asyncio.run(tudo())
 

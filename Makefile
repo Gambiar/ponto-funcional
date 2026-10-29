@@ -58,3 +58,7 @@ figuras-comparacao:
 	$(COMPOSE) run --rm --no-deps carga ponto.analise.comparar --resultados resultados --saida figuras/comparacao
 
 comparacao: comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao
+
+calibrar:       ## mede a taxa máxima que o gerador sustenta (servidor nulo)
+	$(COMPOSE) --profile ferramentas up -d --build eco
+	$(COMPOSE) run --rm --no-deps -e ECO_URL=http://eco:8001 carga ponto.carga.calibrar

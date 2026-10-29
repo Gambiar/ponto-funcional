@@ -57,3 +57,11 @@ services:
     cpus: 2
     entrypoint: ["python", "-m"]
     command: ["ponto.carga.experimento", "--suite", "padrao"]
+
+  # servidor nulo para calibrar o gerador de carga (ponto.carga.calibrar)
+  eco:
+    build: .
+    profiles: ["ferramentas"]
+    entrypoint: ["python", "-m"]
+    command: ["ponto.carga.calibrar", "--servir"]
+    cpus: 1

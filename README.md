@@ -7,6 +7,8 @@ Autores: Sergio Andrew Farias, Vinicius Camargo Prattes.
 
 ---
 
+> Metodologia detalhada, hipóteses e registro de todas as correções: [`docs/metodologia.md`](docs/metodologia.md).
+
 ## Como rodar
 
 Requisito: Docker com Docker Compose (Linux, macOS ou Windows). Nada mais precisa ser instalado.

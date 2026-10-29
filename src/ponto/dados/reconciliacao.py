@@ -147,6 +147,9 @@ def resumir(avaliacoes: Iterable[Avaliacao]) -> dict[str, float | int]:
         "acerto_gabarito": round(sum(a.obtido == a.esperado for a in lista) / total, 6) if total else 0,
         "disponibilidade": round(aceitos / total, 6) if total else 0,
         "integridade": round(1 - integridade_erros / aceitos, 6) if aceitos else 0,
+        "taxa_erro_integridade": round(integridade_erros / aceitos, 8) if aceitos else 0,
+        # ordem_invertida é dominada pela compressão de tempo do experimento (ver docs/metodologia.md, C6)
+        "erros_de_integridade_sem_ordem": integridade_erros - cats["divergente:ordem_invertida"],
         "sem_erros": cats["correto"] == total,
         **{f"n_{c}": n for c, n in sorted(cats.items()) if c != "correto"},
     }

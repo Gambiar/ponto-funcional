@@ -1,4 +1,4 @@
-"""Compara as implementações a partir de resultados/<impl>/<cenario>/resumo.csv.
+"""Compara as implementações a partir de resultados/<impl>/[rep_<k>/]<cenario>/resumo.csv.
 
 Uso:
     python -m ponto.analise.comparar --resultados resultados --saida figuras/comparacao
@@ -17,29 +17,51 @@ import pandas as pd  # noqa: E402
 from .graficos import SERIES  # noqa: E402
 
 IMPLEMENTACOES = {"python_imperativo": SERIES[1], "python_funcional": SERIES[0], "elixir": SERIES[6]}
+CRITERIOS = ("ok_carga", "ok_integridade", "sem_erros")
+
+
+def _rep(csv: Path) -> str:
+    pai = csv.parent.parent.name
+    return pai if pai.startswith("rep_") else "rep_1"
 
 
 def carregar(raiz: Path) -> pd.DataFrame:
+    """Aceita resultados/<impl>/<cenario>/ e resultados/<impl>/rep_<k>/<cenario>/."""
     tabelas = [
-        pd.read_csv(csv).assign(impl=impl)
+        pd.read_csv(csv).assign(impl=impl, rep=_rep(csv))
         for impl in IMPLEMENTACOES
-        for csv in sorted((raiz / impl).glob("*/resumo.csv"))
+        for csv in sorted((raiz / impl).glob("**/resumo.csv"))
     ]
     return pd.concat(tabelas, ignore_index=True) if tabelas else pd.DataFrame()
 
 
-def limite(grupo: pd.DataFrame) -> float | None:
-    ok = grupo.sort_values("taxa_alvo")
-    primeiro_erro = ok.index[~ok["sem_erros"].astype(bool)]
-    antes = ok.loc[: primeiro_erro[0]].iloc[:-1] if len(primeiro_erro) else ok
-    return antes["taxa_alvo"].max() if len(antes) else None
+def limite(grupo: pd.DataFrame, criterio: str) -> float | None:
+    """Maior taxa antes do primeiro degrau que falha; degrau com gerador inválido encerra (C3)."""
+    g = grupo.sort_values("taxa_alvo")
+    ok = g[criterio].astype(bool)
+    if "gerador_valido" in g:
+        ok &= g["gerador_valido"].astype(bool)
+    ok = ok.cumprod().astype(bool)
+    return g.taxa_alvo[ok].max() if ok.any() else None
 
 
-def tabela(df: pd.DataFrame) -> str:
+def celula(g: pd.DataFrame, criterio: str) -> str:
+    """Mediana entre repetições, com mínimo e máximo quando há mais de uma (C9)."""
+    if g.empty:
+        return "-"
+    lims = pd.Series([limite(r, criterio) for _, r in g.groupby("rep")], dtype="float")
+    if lims.isna().all():
+        return "nenhum"
+    if len(lims) == 1:
+        return f"{lims.iloc[0]:.0f}"
+    return f"{lims.median():.0f} [{lims.min():.0f}–{lims.max():.0f}] (n={len(lims)})"
+
+
+def tabela(df: pd.DataFrame, criterio: str) -> str:
     linhas = ["| cenário | " + " | ".join(IMPLEMENTACOES) + " |", "|---" * (len(IMPLEMENTACOES) + 1) + "|"]
     for cenario, g in df.groupby("cenario"):
-        valores = [limite(g[g.impl == impl]) if (g.impl == impl).any() else "-" for impl in IMPLEMENTACOES]
-        linhas.append(f"| {cenario} | " + " | ".join(str(v) for v in valores) + " |")
+        valores = [celula(g[g.impl == impl], criterio) for impl in IMPLEMENTACOES]
+        linhas.append(f"| {cenario} | " + " | ".join(valores) + " |")
     return "\n".join(linhas)
 
 
@@ -48,14 +70,15 @@ def figura_p99(df: pd.DataFrame, saida: Path) -> None:
     fig, eixos = plt.subplots(1, len(cenarios), figsize=(4 * len(cenarios), 3.6), sharey=True, squeeze=False)
     for ax, cenario in zip(eixos[0], cenarios):
         for impl, cor in IMPLEMENTACOES.items():
-            g = df[(df.cenario == cenario) & (df.impl == impl)].sort_values("taxa_alvo")
+            g = df[(df.cenario == cenario) & (df.impl == impl)]
             if len(g):
-                ax.plot(g.taxa_alvo, g.lat_p99_ms, marker="o", color=cor, label=impl)
+                mediana = g.groupby("taxa_alvo").lat_p99_ms.median()
+                ax.plot(mediana.index, mediana.values, marker="o", color=cor, label=impl)
         ax.set_title(cenario)
         ax.set_xlabel("taxa alvo (req/s)")
         ax.set_yscale("log")
         ax.grid(alpha=0.3)
-    eixos[0][0].set_ylabel("latência p99 (ms)")
+    eixos[0][0].set_ylabel("latência p99 (ms), mediana das repetições")
     eixos[0][-1].legend()
     fig.tight_layout()
     fig.savefig(saida / "comparacao_p99.png", dpi=150)
@@ -69,9 +92,11 @@ def main() -> None:
     df = carregar(a.resultados)
     if df.empty:
         raise SystemExit(f"nenhum resumo.csv em {a.resultados}/<impl>/")
+    # resultados antigos (antes de C5) só têm sem_erros
+    criterios = [c for c in CRITERIOS if c in df]
     a.saida.mkdir(parents=True, exist_ok=True)
     figura_p99(df, a.saida)
-    texto = "Limite sem erros (req/s) por implementação:\n\n" + tabela(df) + "\n"
+    texto = "".join(f"## Limite (req/s), critério `{c}`\n\n{tabela(df, c)}\n\n" for c in criterios)
     (a.saida / "comparacao.md").write_text(texto, encoding="utf-8")
     print(texto)
 
