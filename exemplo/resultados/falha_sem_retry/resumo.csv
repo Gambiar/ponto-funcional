@@ -1,0 +1,2 @@
+cenario,taxa_alvo,taxa_obtida,atraso_gerador_p99_ms,duracao_ate_drenar_s,lat_p50_ms,lat_p95_ms,lat_p99_ms,lote_medio,retries,perdidos_servidor,registros,corretos,erros_de_carga,erros_de_integridade,acerto_gabarito,disponibilidade,integridade,sem_erros,n_divergente:cascata_de_perda,n_perda_silenciosa
+falha_sem_retry,500,499.5,4.5,30.2,0.9,3.8,22.7,54.7,0,4978,14817,7522,0,7295,0.50766,1.0,0.50766,False,2317,4978

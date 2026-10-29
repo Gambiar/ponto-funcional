@@ -1,0 +1,6 @@
+cenario,taxa_alvo,taxa_obtida,atraso_gerador_p99_ms,duracao_ate_drenar_s,lat_p50_ms,lat_p95_ms,lat_p99_ms,lote_medio,retries,perdidos_servidor,registros,corretos,erros_de_carga,erros_de_integridade,acerto_gabarito,disponibilidade,integridade,sem_erros,n_divergente:ordem_invertida,n_divergente:saida_antes_da_entrada,n_processado_sem_confirmacao,n_falha_conexao,n_timeout
+baseline,100,100.0,1.7,19.7,3.1,5.6,9.9,0,0,0,1970,1970,0,0,1.0,1.0,1.0,True,0,0,0,0,0
+baseline,250,249.9,2.1,19.9,3.0,13.5,68.7,0,0,0,4960,4960,0,0,1.0,1.0,1.0,True,0,0,0,0,0
+baseline,500,499.6,2.7,19.8,3.8,73.7,177.2,0,0,0,9873,9873,0,0,1.0,1.0,1.0,True,0,0,0,0,0
+baseline,1000,762.2,613.2,26.6,1258.1,5217.2,5557.0,0,0,0,19764,12171,0,1322,0.924863,0.682706,0.933111,False,38,1284,6271,0,0
+baseline,1500,839.3,7768.3,35.4,2071.8,9842.4,11047.2,0,0,0,29700,7239,17950,187,0.374276,0.250034,0.984085,False,23,164,4324,210,17740

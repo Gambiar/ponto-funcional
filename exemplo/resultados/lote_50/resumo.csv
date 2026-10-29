@@ -1,0 +1,8 @@
+cenario,taxa_alvo,taxa_obtida,atraso_gerador_p99_ms,duracao_ate_drenar_s,lat_p50_ms,lat_p95_ms,lat_p99_ms,lote_medio,retries,perdidos_servidor,registros,corretos,erros_de_carga,erros_de_integridade,acerto_gabarito,disponibilidade,integridade,sem_erros,n_divergente:ordem_invertida,n_divergente:saida_antes_da_entrada,n_processado_sem_confirmacao,n_timeout
+lote_50,100,100.0,2.5,20.2,0.9,1.6,4.2,10.6,0,0,1970,1970,0,0,1.0,1.0,1.0,True,0,0,0,0
+lote_50,250,249.9,2.2,20.4,0.8,1.6,4.1,26.5,0,0,4960,4960,0,0,1.0,1.0,1.0,True,0,0,0,0
+lote_50,500,499.5,2.9,20.3,0.8,2.6,15.9,49.9,0,0,9873,9873,0,0,1.0,1.0,1.0,True,0,0,0,0
+lote_50,1000,998.6,6.3,20.3,0.9,12.8,30.5,49.9,0,0,19764,19764,0,0,1.0,1.0,1.0,True,0,0,0,0
+lote_50,1500,1496.7,25.0,19.8,1.0,43.0,106.5,50,0,0,29700,29700,0,0,1.0,1.0,1.0,True,0,0,0,0
+lote_50,2000,1982.1,103.2,20.5,2.5,160.8,227.2,50.0,0,0,39667,39649,0,18,0.999546,1.0,0.999546,False,18,0,0,0
+lote_50,3000,1941.9,6527.0,31.6,107.9,7558.2,8363.2,49.9,0,0,59436,46831,5837,36,0.901087,0.788529,0.999328,False,14,22,6732,5837

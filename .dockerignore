@@ -1,0 +1,10 @@
+.git
+__pycache__
+.pytest_cache
+.hypothesis
+dados
+resultados
+figuras
+*.egg-info
+.venv
+elixir

@@ -1,0 +1,11 @@
+# Versão em Elixir: mesma porta, mesmo contrato HTTP, mesmo banco.
+#   docker compose -f docker-compose.yml -f compose.elixir.yml up -d --build --wait db api
+services:
+  api:
+    build: ./elixir
+    image: ponto-api-elixir
+    environment:
+      # 1 escalonador = mesma fatia de CPU (cpus: 1) que o processo único do Uvicorn
+      ERL_FLAGS: "+S 1:1"
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8000/saude"]

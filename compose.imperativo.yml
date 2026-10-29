@@ -1,0 +1,5 @@
+# Variante imperativa em Python (grupo de controle): mesma imagem, outro módulo.
+#   docker compose -f docker-compose.yml -f compose.imperativo.yml up -d --build --wait db api
+services:
+  api:
+    command: ["uvicorn", "ponto_imperativo.api:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "warning"]

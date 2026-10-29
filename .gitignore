@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+build/
+.venv/
+/dados/
+/resultados/
+/figuras/
+
+# elixir
+elixir/_build/
+elixir/deps/
+.idea/

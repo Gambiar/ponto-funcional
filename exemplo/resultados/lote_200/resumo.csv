@@ -1,0 +1,7 @@
+cenario,taxa_alvo,taxa_obtida,atraso_gerador_p99_ms,duracao_ate_drenar_s,lat_p50_ms,lat_p95_ms,lat_p99_ms,lote_medio,retries,perdidos_servidor,registros,corretos,erros_de_carga,erros_de_integridade,acerto_gabarito,disponibilidade,integridade,sem_erros,n_divergente:ordem_invertida
+lote_200,100,100.0,2.4,20.2,0.9,1.5,4.0,10.6,0,0,1970,1970,0,0,1.0,1.0,1.0,True,0
+lote_200,250,249.9,1.6,20.4,0.8,1.4,4.7,26.4,0,0,4960,4960,0,0,1.0,1.0,1.0,True,0
+lote_200,500,499.7,2.2,20.3,0.8,2.4,13.8,54.2,0,0,9873,9873,0,0,1.0,1.0,1.0,True,0
+lote_200,1000,998.1,4.4,20.3,0.9,21.2,40.3,122,0,0,19764,19764,0,0,1.0,1.0,1.0,True,0
+lote_200,1500,1494.7,19.9,20.4,1.0,41.4,83.7,185.6,0,0,29700,29698,0,2,0.999933,1.0,0.999933,False,2
+lote_200,2000,1987.5,112.0,20.0,3.1,114.3,201.4,196.4,0,0,39667,39661,0,6,0.999849,1.0,0.999849,False,6

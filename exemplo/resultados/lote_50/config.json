@@ -1,0 +1,24 @@
+{
+  "nome": "lote_50",
+  "modo": "lote",
+  "lote": 50,
+  "espera_ms": 100,
+  "tentativas": 8,
+  "taxas": [
+    100,
+    250,
+    500,
+    1000,
+    1500,
+    2000,
+    3000
+  ],
+  "duracao": 20,
+  "anomalias": 0.05,
+  "seed": 42,
+  "timeout": 5.0,
+  "falha_em": null,
+  "falha_seg": 10.0,
+  "parar_apos": 2,
+  "extra": {}
+}
