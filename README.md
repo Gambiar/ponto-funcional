@@ -106,7 +106,7 @@ Para cada taxa da rampa (`ponto.carga.experimento`):
 4. espera a fila esvaziar;
 5. lê o banco e reconcilia cada registro.
 
-A rampa para depois de dois degraus seguidos com erro.
+A rampa para depois de dois degraus seguidos reprovados (em carga, em integridade ou por atraso do gerador).
 
 ### Cenários da suíte padrão
 
@@ -116,6 +116,8 @@ A rampa para depois de dois degraus seguidos com erro.
 | `lote_50`, `lote_200`, `lote_1000` | fila + gravação em lotes de tamanhos diferentes |
 | `falha_com_retry` | 500 req/s; banco indisponível por 10 s a partir do 5º segundo; 8 tentativas com backoff |
 | `falha_sem_retry` | igual, com 1 tentativa |
+| `falha_com_retry_20s`, `falha_com_retry_30s` | quedas mais longas que o backoff acumulado (16,2 s) |
+| `falha_baseline_com_retry`, `falha_baseline_sem_retry` | a mesma queda no modo baseline (grupo de comparação de durabilidade) |
 
 A falha é simulada pela API (`POST /admin/falha`), então funciona em qualquer máquina. Também é possível derrubar o banco de verdade durante um teste com `docker compose stop db` e `docker compose start db`.
 
@@ -138,7 +140,11 @@ Métricas por degrau:
 
 - **disponibilidade**: fração de requisições aceitas (2xx);
 - **integridade**: entre os aceitos, fração processada corretamente;
-- **sem erros**: todos os registros terminaram corretos. O **limite** do cenário é a maior taxa antes do primeiro degrau com erro.
+- **latência**: p50/p95/p99 das respostas 2xx e `lat_p99_todas_ms` (inclui timeouts);
+- **validade**: `gerador_valido` é falso quando o gerador atrasou mais de 20 ms (p99) em relação à agenda.
+
+O **limite** do cenário é a maior taxa antes do primeiro degrau reprovado, contando só degraus com gerador válido, por três critérios:
+`ok_carga` (nenhum erro de carga), `ok_integridade` (nenhuma perda ou divergência estrutural e taxa de erro ≤ 10⁻⁴) e `sem_erros` (todos os registros corretos). Detalhes em [`docs/metodologia.md`](docs/metodologia.md).
 
 ### Arquivos gerados
 
@@ -189,22 +195,30 @@ docker compose -f docker-compose.yml -f compose.imperativo.yml up -d --build --w
 docker compose run --rm --no-deps carga ponto.carga.experimento --suite padrao --saida resultados/python_imperativo
 docker compose -f docker-compose.yml -f compose.elixir.yml up -d --build --wait db api
 docker compose run --rm --no-deps carga ponto.carga.experimento --suite padrao --saida resultados/elixir
+docker compose run --rm --no-deps carga ponto.analise.graficos --tudo
 docker compose run --rm --no-deps carga ponto.analise.comparar
 ```
 
-A API Elixir roda com `+S 1:1` (um escalonador), para disputar a mesma fatia de CPU (`cpus: 1`) que o processo único do Uvicorn. Rode cada suíte **pelo menos 3 vezes** e compare médias e dispersão: diferenças de poucos registros entre execuções únicas são ruído.
+Para o artigo, acrescente `--repeticoes 5 --duracao-suite 60` a cada `ponto.carga.experimento` (é o que o `make comparacao` faz).
+
+A API Elixir roda com `+S 1:1` (um escalonador), para disputar a mesma fatia de CPU (`cpus: 1`) que o processo único do Uvicorn. Compare medianas e dispersão entre as repetições: diferenças de poucos registros entre execuções únicas são ruído.
 
 ## Estrutura
 
 ```
-src/ponto/
-  nucleo/        funções puras: modelos, validação, lotes, oráculo
-  casca/         API, fila, repositório (efeitos)
-  util/retry.py  decoradores de retry e de falha simulada
-  dados/         gerador com gabarito, reconciliação
-  carga/         gerador de carga em malha aberta, experimento
-  analise/       figuras
-tests/           pytest + Hypothesis
+src/ponto/                 versão funcional (principal)
+  nucleo/                  funções puras: modelos, validação, lotes, oráculo
+  casca/                   API, fila, repositório (efeitos)
+  util/retry.py            decoradores de retry e de falha simulada
+  dados/                   gerador com gabarito, reconciliação
+  carga/                   gerador de carga em malha aberta, experimento, calibração
+  analise/                 figuras por pasta de resultados, comparação entre implementações
+src/ponto_imperativo/      versão imperativa (grupo de controle)
+elixir/                    versão Elixir (mix, Dockerfile próprio)
+compose.*.yml              trocam o serviço api pela versão imperativa ou Elixir
+docs/metodologia.md        hipóteses, métodos e registro de correções
+exemplo/                   resultados de uma execução anterior às correções metodológicas
+tests/                     pytest + Hypothesis
 ```
 
 ## Configuração

@@ -39,8 +39,9 @@ def celula(g: pd.DataFrame, criterio: str) -> str:
     """Mediana entre repetições, com mínimo e máximo quando há mais de uma (C9)."""
     if g.empty:
         return "-"
-    lims = pd.Series([limite(r, criterio) for _, r in g.groupby("rep")], dtype="float")
-    if lims.isna().all():
+    # repetição sem nenhum degrau aprovado conta como 0, para não inflar a mediana
+    lims = pd.Series([limite(r, criterio) or 0 for _, r in g.groupby("rep")], dtype="float")
+    if (lims == 0).all():
         return "nenhum"
     if len(lims) == 1:
         return f"{lims.iloc[0]:.0f}"

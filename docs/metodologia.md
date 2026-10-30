@@ -16,7 +16,7 @@ A pergunta mistura dois efeitos, então o desenho os separa:
 |---|---|---|
 | Python imperativo × Python funcional | **estilo** (núcleo puro, imutabilidade, funções de ordem superior), com o mesmo runtime | **H1:** vazão e erros sob carga **não** diferem de forma relevante, porque o gargalo é I/O e banco, e os erros vêm da arquitetura, não do estilo. A diferença aparece em testabilidade e complexidade do código. |
 | Python funcional × Elixir | **runtime/linguagem funcional** (BEAM: processos leves, escalonamento preemptivo, imutabilidade garantida) | **H2:** Elixir mantém latência de cauda (p99) menor perto da saturação, pelo escalonamento justo, sem mudar os tipos de erro de integridade, que dependem da arquitetura (fila, 202 antes de persistir). |
-| baseline × lote (dentro de cada implementação) | **arquitetura** | **H3:** o lote aumenta a vazão, mas troca durabilidade por desempenho: sob falha do banco, o lote produz perda silenciosa e o baseline não. |
+| baseline × lote (dentro de cada implementação) | **arquitetura** | **H3:** o lote aumenta a vazão, mas troca durabilidade por desempenho: sob falha do banco, o lote produz perda silenciosa e o baseline não. No baseline, a falha aparece para o cliente: como recusa explícita (503) sem retry, ou como timeout ambíguo com retry (C11). |
 
 As hipóteses foram escritas antes das execuções finais, para que a análise não seja ajustada aos resultados.
 
@@ -40,7 +40,7 @@ Regras de negócio: um registro por servidor, tipo e dia (os demais são `descar
 | `python_funcional` | `src/ponto/` | núcleo puro (`nucleo/`: dataclasses congeladas, `match`, closures, `reduce`, recursão logarítmica) + casca imperativa (`casca/`). Retry e falha simulada como decoradores. |
 | `elixir` | `elixir/` | núcleo puro em `Ponto.Nucleo`; fila como processo `GenServer` com estado imutável; retry, falha e tradução de erros compostos com `\|>`; contadores atômicos; Bandit + Postgrex. |
 
-Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e SQL, limites de contêiner (API 1 CPU, banco 2 CPUs, carga 2 CPUs), parâmetros (`TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `POOL_MAX`). A BEAM roda com `+S 1:1` (um escalonador), equivalente ao processo único do Uvicorn.
+Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e SQL, limites de contêiner (API 1 CPU, banco 2 CPUs, carga 2 CPUs), parâmetros (`TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `POOL_MAX`) e **um único consumidor** da fila (`CONSUMIDORES=1`; as versões imperativa e Elixir não leem essa variável). A BEAM roda com `+S 1:1` (um escalonador), equivalente ao processo único do Uvicorn.
 
 ---
 
@@ -166,6 +166,7 @@ docker compose run --rm --no-deps carga ponto.analise.comparar
 | **B2** | O teste `test_reenvio_nao_muda_o_que_foi_gravado` afirmava uma propriedade **falsa**. | Contraexemplo construído à mão: saída `a` e entrada `b` no mesmo instante; o desempate por id processa a saída primeiro (rejeitada) e o reenvio `a-r`, 1 s depois, é gravado legitimamente. O Hypothesis não encontrou o caso por ser raro (mesmo servidor, mesmo minuto, ids em ordem desfavorável). | A propriedade foi reformulada como "o reenvio nunca regrava uma chave já gravada", e o contraexemplo virou teste (`test_reenvio_pode_gravar_saida_antes_rejeitada`). |
 | **B3** | O `.gitignore` ignorava `resultados/` e `figuras/` em qualquer pasta, deixando `exemplo/` fora do repositório. | Revisão do primeiro commit. | Padrões restritos à raiz (`/resultados/`). |
 | **B4** | A versão Elixir consultava as entradas existentes **antes** de inserir as entradas do próprio lote, o que faria saídas do mesmo lote serem rejeitadas. | Revisão do código antes do primeiro build. | Ordem igual à da versão Python: inserir entradas, consultar e depois inserir saídas. |
+| **B5** | Na comparação entre repetições, uma repetição sem nenhum degrau aprovado (limite `None`) era descartada no cálculo da mediana, o que inflava o resultado. | Revisão da lógica de `comparar.celula`. | A repetição sem degrau aprovado passa a contar como 0. |
 
 ### 9.2 Correções metodológicas
 
@@ -177,10 +178,11 @@ docker compose run --rm --no-deps carga ponto.analise.comparar
 | **C4** | O p99 considerava só respostas 2xx (viés de sobrevivência): quanto pior o sistema, mais timeouts são excluídos e melhor o p99 parece. | — | Nova coluna `lat_p99_todas_ms`, incluindo timeouts e erros. |
 | **C5** | "Limite sem erros" com tolerância zero misturava carga e integridade, e um único registro decidia o resultado. | `lote_200` teve limite 1000 por causa de **2** `ordem_invertida` entre 29.700 registros. | Critérios separados (`ok_carga`, `ok_integridade` com tolerância de 10⁻⁴); `sem_erros` mantido como critério estrito. |
 | **C6** | `ordem_invertida` é dominada pela compressão de tempo: o dia (7h–22h) é enviado em 20 s (cerca de 2700×), e duplicatas com 1 a 50 s de intervalo chegam com 0,4 a 18 ms de diferença, quando requisições concorrentes podem chegar fora de ordem na rede. | Todos os erros dos modos lote até 2000 req/s são `ordem_invertida`. | Reportada à parte (`erros_de_integridade_sem_ordem`); entra no critério só pela tolerância. Fica documentada como ameaça à validade. |
-| **C7** | Faltava o grupo de comparação para durabilidade: só o modo lote era testado sob falha. | — | Cenários `falha_baseline_com_retry` e `falha_baseline_sem_retry`. No baseline, a falha vira 503, que o cliente vê. No lote, vira perda silenciosa após o 202 (H3). |
+| **C7** | Faltava o grupo de comparação para durabilidade: só o modo lote era testado sob falha. | — | Cenários `falha_baseline_com_retry` e `falha_baseline_sem_retry`. No baseline, a falha sempre aparece para o cliente (ver C11). No lote, vira perda silenciosa após o 202 (H3). |
 | **C8** | O resultado "com retry, zero perda" era garantido por construção: 8 tentativas acumulam 0,2+0,4+…+5+5 = 16,2 s de backoff, que cobrem a queda de 10 s. | — | Cenários com queda de 20 s e 30 s. A 500 req/s, a fila de 10 mil também enche em cerca de 20 s. |
 | **C9** | Uma execução por cenário, sem medida de dispersão; degraus de 20 s talvez curtos para o regime estável da fila. | Diferenças entre `lote_50/200/1000` menores que o ruído esperado. | `--repeticoes N` (sementes diferentes, em `rep_k/`); `--duracao-suite 60`; `comparar` reporta mediana [mín–máx]. |
 | **C10** | Os picos de turno (7h, 13h, 18h) não produziam picos de carga: o envio é agendado pela posição na lista. | Leitura de `rampa.disparar`. | Decisão: o experimento é descrito como **taxa constante**. Os turnos afetam só a ordem dos registros. Agendar pelo horário do registro fica como trabalho futuro. |
+| **C11** | A primeira versão deste documento afirmava que, no baseline, a falha "vira 503". Só é verdade **sem** retry. Com 8 tentativas, a requisição fica presa até 16,2 s no servidor, o cliente desiste em 5 s (`timeout`) e, quando o banco volta, o registro é gravado: `processado_sem_confirmacao`. | Revisão da lógica: backoff acumulado (16,2 s) > timeout do cliente (5 s). | Texto de H3 e C7 corrigido. É um achado para a discussão: um retry mais longo que o timeout do cliente transforma uma recusa explícita (503, o cliente sabe que deve reenviar) numa resposta ambígua (o cliente não sabe se gravou). |
 
 ### 9.3 Limitações conhecidas (ameaças à validade)
 
