@@ -6,6 +6,35 @@ Identificadores usados no código (comentários `(C3)`, `(C5)` etc.) apontam par
 
 ---
 
+## 0. O que foi redefinido em relação à versão original
+
+A primeira versão do projeto (resultados em `exemplo/`) foi revisada e várias definições mudaram. Esta tabela resume **o que vale agora**. O porquê de cada mudança está no registro de correções (seção 9).
+
+| Aspecto | Versão original | Versão atual | Ref. |
+|---|---|---|---|
+| **Implementações comparadas** | só Python funcional | Python imperativo (controle), Python funcional e Elixir, com o mesmo contrato | §2 |
+| **Pergunta** | até que taxa o serviço opera sem erros | se o estilo funcional (H1) e o runtime funcional (H2) mudam vazão e erros; arquitetura como terceira comparação (H3) | §1 |
+| **Erro de carga** | enviados − (aceitos + `processado_sem_confirmacao`) | enviados − aceitos (2xx); `processado_sem_confirmacao` é erro de carga | C1 |
+| **Integridade** | calculada sobre todos que chegaram | calculada só sobre os aceitos (2xx) | C1 |
+| **Taxa obtida** | envios ÷ tempo até a última **resposta** | envios ÷ tempo até o último **envio** | C2 |
+| **Latência** | p99 só das respostas 2xx | p99 das 2xx **e** `lat_p99_todas_ms`, com timeouts | C4 |
+| **Limite** | um critério: nenhum erro (tolerância zero) | três critérios: `ok_carga`, `ok_integridade` (tolerância de 10⁻⁴, sem erros estruturais) e `sem_erros` (estrito) | C5 |
+| **`ordem_invertida`** | erro de integridade como os outros | contado à parte (efeito da compressão de tempo); só entra no limite pela tolerância | C6 |
+| **Validade do degrau** | não verificada | degrau inválido se o atraso p99 do gerador passar de 20 ms; não conta para o limite | C3 |
+| **Gerador de carga** | 1 processo, 2 CPUs (satura perto de 2500 req/s) | 4 processos, 4 CPUs, repartição por servidor (cumpre a agenda até cerca de 6000 req/s) | C12 |
+| **Rampa de taxas** | 100 → 3000 req/s | 100 → 6000 req/s | C12 |
+| **Parada da rampa** | 2 degraus seguidos com qualquer erro | 2 degraus seguidos reprovados em carga, em integridade ou por gerador inválido | C5 |
+| **Cenários de falha** | lote com e sem retry, queda de 10 s | + quedas de 20 s e 30 s; + baseline com e sem retry | C7, C8 |
+| **Repetições** | 1 execução, degraus de 20 s | 5 repetições com sementes diferentes, degraus de 60 s, mediana [mín–máx] | C9 |
+| **Carga com picos de turno** | apresentada como picos | descrita como **taxa constante**; os turnos só afetam a ordem dos registros | C10 |
+| **Recursos** | API 1, banco 2, carga 2 CPUs (5 no total) | API 1, banco 2, gerador 4 CPUs (7 no total) | C12 |
+| **Calibração do gerador** | não havia | `make calibrar` contra um servidor nulo de 4 processos | C3, C12 |
+| **Registro do ambiente** | não havia | `make ambiente` grava CPU, memória, kernel e versões em `resultados/ambiente.txt` | §7 |
+
+**Consequência para o artigo:** os números de `exemplo/` não são comparáveis com os da versão atual. Eles servem para ilustrar, na discussão, como as correções mudaram as conclusões. Por exemplo, o limite do `lote_200` caiu para 1000 por causa de 2 registros (C5), e os degraus de 3000 req/s mediam o gerador, não a API (C3).
+
+---
+
 ## 1. Pergunta e hipóteses
 
 **Pergunta.** Aplicar conceitos de programação funcional (PF) a um pipeline de registro de ponto muda (a) a vazão máxima sem erros e (b) a quantidade e o tipo de erros sob carga?

@@ -103,29 +103,33 @@ Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU 
 
 **Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos, falha simulada em vez de queda real. Ver [Limitações](#limitações-ameaças-à-validade).
 
-O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C11, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md). As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
+O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C12, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
 
 ### Estado atual
 
-- Versões Python: 43 testes passando.
+- Versões Python: 46 testes passando; gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
 - Versão Elixir: escrita, ainda **não compilada nem executada** (aguarda o ambiente Docker).
+- Execução final: planejada numa **VM Linux dedicada**; ver [`docs/vm.md`](docs/vm.md).
 - `exemplo/`: resultados de uma execução **anterior** às correções metodológicas; servem para mostrar a evolução do método, não como resultado final.
 
 ---
 
 ## Como rodar
 
-Requisito: Docker com Docker Compose (Linux, macOS ou Windows). Nada mais precisa ser instalado.
+Requisito: Docker com Docker Compose (Linux, macOS ou Windows) e **pelo menos 8 núcleos** (os contêineres usam 7). Nada mais precisa ser instalado.
+
+> **Para a execução do artigo, use uma VM Linux dedicada:** tamanho, preparação, tempo estimado (12–15 h para a comparação completa) e o que registrar estão em [`docs/vm.md`](docs/vm.md).
 
 ```bash
 docker compose up -d --build --wait db api                                   # 1. sobe banco e API
 docker compose run --rm --no-deps --entrypoint pytest carga -q                # 2. testes
-docker compose run --rm carga ponto.carga.experimento --suite padrao          # 3. experimentos (~15-25 min)
+docker compose run --rm carga ponto.carga.experimento --suite padrao          # 3. experimentos (~40-60 min)
 docker compose run --rm carga ponto.analise.graficos                          # 4. figuras
 docker compose down                                                           # 5. desliga
 ```
 
 Com `make`: `make subir`, `make testes`, `make experimento`, `make graficos`, ou `make tudo`.
+Antes de medir: `make ambiente` (registra o hardware) e `make calibrar` (teto do gerador de carga).
 
 Para conferir rapidamente se o ambiente funciona (~2 min):
 

@@ -1,7 +1,7 @@
 COMPOSE = docker compose
 RODAR = $(COMPOSE) run --rm carga
 
-.PHONY: subir testes dados experimento rapido graficos tudo logs parar limpar
+.PHONY: subir testes dados experimento rapido graficos tudo logs parar limpar ambiente calibrar
 
 subir:          ## sobe banco e API
 	$(COMPOSE) up -d --build --wait db api
@@ -60,8 +60,21 @@ figuras-comparacao:  ## figuras por implementação/repetição + tabela e gráf
 	$(COMPOSE) run --rm --no-deps carga ponto.analise.graficos --tudo --resultados resultados --saida figuras
 	$(COMPOSE) run --rm --no-deps carga ponto.analise.comparar --resultados resultados --saida figuras/comparacao
 
-comparacao: calibrar comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao  ## pipeline completo do artigo
+comparacao: ambiente calibrar comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao  ## pipeline completo do artigo
 
-calibrar:       ## mede a taxa máxima que o gerador sustenta (servidor nulo)
+calibrar:       ## grava resultados/calibracao.txt; mede a taxa máxima que o gerador sustenta (servidor nulo)
+	mkdir -p resultados
 	$(COMPOSE) --profile ferramentas up -d --build eco
-	$(COMPOSE) run --rm --no-deps -e ECO_URL=http://eco:8001 carga ponto.carga.calibrar
+	$(COMPOSE) run --rm --no-deps -e ECO_URL=http://eco:8001 carga ponto.carga.calibrar | tee resultados/calibracao.txt
+	$(COMPOSE) --profile ferramentas stop eco    # libera as CPUs antes do experimento
+
+ambiente:       ## registra hardware e versões em resultados/ambiente.txt (vai para o artigo)
+	mkdir -p resultados
+	{ echo "data: $$(date -Iseconds)"; \
+	  echo "commit: $$(git rev-parse --short HEAD 2>/dev/null)"; \
+	  echo "GERADOR_PROCESSOS=$${GERADOR_PROCESSOS:-4} CARGA_CPUS=$${CARGA_CPUS:-4}"; \
+	  echo; uname -a; echo; lscpu 2>/dev/null || sysctl -a 2>/dev/null | grep machdep.cpu; \
+	  echo; free -h 2>/dev/null; echo; nproc 2>/dev/null; \
+	  echo; docker version --format 'docker {{.Server.Version}}'; docker compose version; \
+	} > resultados/ambiente.txt
+	@cat resultados/ambiente.txt | head -5
