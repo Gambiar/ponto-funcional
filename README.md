@@ -1,6 +1,8 @@
 # Ponto Funcional
 
-Trabalho final da disciplina de Programação Funcional (mestrado, UFPR).
+Trabalho final da disciplina **CAES005 – Introduction to Functional Programming**
+Programa de Pós-Graduação em Computação Aplicada (**PPGCA**) – Universidade Tecnológica Federal do Paraná (**UTFPR**)
+Professor: Adolfo Gustavo Serra Seca Neto
 Autores: Sergio Andrew Farias, Vinicius Camargo Prattes.
 
 ---

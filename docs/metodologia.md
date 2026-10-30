@@ -1,5 +1,7 @@
 # Metodologia e registro de correções
 
+Trabalho da disciplina CAES005 – Introduction to Functional Programming (PPGCA – UTFPR), prof. Adolfo Gustavo Serra Seca Neto.
+
 Este documento descreve como o experimento está estruturado e registra **todas as correções** feitas ao longo do trabalho, com o problema encontrado, a evidência e o que mudou. As correções fazem parte do resultado: várias delas só apareceram porque o núcleo funcional, o oráculo e os testes de propriedade tornaram os erros visíveis.
 
 Identificadores usados no código (comentários `(C3)`, `(C5)` etc.) apontam para as seções abaixo.
