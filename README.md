@@ -165,7 +165,19 @@ Para separar o efeito do **estilo funcional** do efeito do **runtime funcional**
 | `elixir` (em validação: ainda não executada) | `elixir/` | linguagem funcional: dados imutáveis, pattern matching nativo, fila como processo GenServer, Bandit + Postgrex |
 
 ```bash
-make comparacao          # roda a suíte padrão nas três versões e gera figuras/comparacao/
+make comparacao          # calibra o gerador, roda a suíte nas três versões (5 repetições × 60 s)
+                         # e gera todas as figuras
+make comparacao REPETICOES=1 DURACAO=20   # versão rápida para conferir o ambiente
+```
+
+Saídas:
+
+```
+resultados/<impl>/rep_<k>/<cenario>/   resumo.csv, envios_<taxa>.csv, erros_<taxa>.csv, config.json
+figuras/<impl>/rep_<k>/                latencia_p99.png, correcao.png, mapa_de_erros.png,
+                                       falha_linha_do_tempo.png, resumo.md (limites pelos 3 critérios)
+figuras/comparacao/                    comparacao.md (limites: mediana [mín–máx] por implementação),
+                                       comparacao_p99.png
 ```
 
 Ou, passo a passo (troca só o serviço `api`):

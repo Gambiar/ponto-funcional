@@ -2,6 +2,8 @@
 
 Uso:
     python -m ponto.analise.graficos --resultados resultados --saida figuras
+    # todas as implementações e repetições de uma vez (espelha a árvore em --saida):
+    python -m ponto.analise.graficos --tudo --resultados resultados --saida figuras
 """
 from __future__ import annotations
 
@@ -25,6 +27,7 @@ ORDEM_CATEGORIAS = [
     "recusado:fila_cheia", "recusado:banco_indisponivel", "timeout", "falha_conexao",
     "processado_sem_confirmacao", "perda_silenciosa", "divergente:cascata_de_perda",
     "divergente:saida_antes_da_entrada", "divergente:ordem_invertida",
+    "divergente:outro", "erro_servidor", "requisicao_invalida",
 ]
 ROTULOS = {
     "correto": "correto",
@@ -37,6 +40,9 @@ ROTULOS = {
     "divergente:cascata_de_perda": "efeito cascata da perda",
     "divergente:saida_antes_da_entrada": "saída antes da entrada",
     "divergente:ordem_invertida": "ordem invertida",
+    "divergente:outro": "outra divergência",
+    "erro_servidor": "erro do servidor (5xx)",
+    "requisicao_invalida": "requisição inválida (4xx)",
 }
 # cor fixa por categoria (a cor segue a categoria em todas as figuras)
 COR_CATEGORIA = {
@@ -50,7 +56,21 @@ COR_CATEGORIA = {
     "divergente:cascata_de_perda": SERIES[3],
     "divergente:saida_antes_da_entrada": SERIES[1],
     "divergente:ordem_invertida": SERIES[7],
+    "divergente:outro": "#7a7974",
+    "erro_servidor": "#3d3c39",
+    "requisicao_invalida": "#a8a79f",
 }
+CRITERIOS = ("ok_carga", "ok_integridade", "sem_erros")
+
+
+def limite(grupo: pd.DataFrame, criterio: str = "sem_erros") -> int | None:
+    """Maior taxa antes do primeiro degrau reprovado; degrau com gerador inválido encerra (C3)."""
+    g = grupo.sort_values("taxa_alvo")
+    ok = g[criterio].astype(bool)
+    if "gerador_valido" in g:
+        ok &= g["gerador_valido"].astype(bool)
+    ok = ok.cumprod().astype(bool)
+    return int(g.taxa_alvo[ok].max()) if ok.any() else None
 
 
 def _estilo() -> None:
@@ -76,10 +96,18 @@ def carregar(raiz: Path) -> pd.DataFrame:
 def fig_latencia(df: pd.DataFrame, saida: Path) -> None:
     fig, ax = plt.subplots(figsize=(5, 3.2))
     for i, (cen, g) in enumerate(df.groupby("cenario", sort=False)):
-        ax.plot(g.taxa_alvo, g.lat_p99_ms, marker="o", markersize=5, color=_cor(cen, i), label=cen)
+        cor = _cor(cen, i)
+        ax.plot(g.taxa_alvo, g.lat_p99_ms, marker="o", markersize=5, color=cor, label=cen)
+        if "lat_p99_todas_ms" in g:  # C4: inclui timeouts
+            ax.plot(g.taxa_alvo, g.lat_p99_todas_ms, linestyle=":", linewidth=1.2, color=cor)
+        if "gerador_valido" in g:  # C3: degraus em que o gerador não cumpriu a agenda
+            inv = g[~g.gerador_valido.astype(bool)]
+            ax.scatter(inv.taxa_alvo, inv.lat_p99_ms, s=70, facecolors=FUNDO, edgecolors=cor, zorder=4)
     ax.set_yscale("log")
     ax.set_xlabel("taxa de requisições (req/s)")
     ax.set_ylabel("latência p99 (ms, escala log)")
+    if "gerador_valido" in df:
+        ax.set_title("contínua: 2xx · pontilhada: todas · vazado: gerador inválido", fontsize=7, loc="left")
     ax.legend()
     fig.tight_layout()
     fig.savefig(saida / "latencia_p99.png", dpi=200)
@@ -164,37 +192,53 @@ def fig_falha(raiz: Path, saida: Path) -> None:
 
 
 def tabela_markdown(df: pd.DataFrame, saida: Path) -> None:
-    cols = ["cenario", "taxa_alvo", "taxa_obtida", "lat_p50_ms", "lat_p99_ms",
-            "disponibilidade", "integridade", "erros_de_carga", "erros_de_integridade", "sem_erros"]
+    desejadas = ["cenario", "taxa_alvo", "taxa_obtida", "atraso_gerador_p99_ms", "gerador_valido",
+                 "lat_p50_ms", "lat_p99_ms", "lat_p99_todas_ms", "disponibilidade", "integridade",
+                 "erros_de_carga", "erros_de_integridade", "retries", "ok_carga", "ok_integridade", "sem_erros"]
+    cols = [c for c in desejadas if c in df]  # resultados antigos não têm as colunas novas
+    criterios = [c for c in CRITERIOS if c in df]
     linhas = ["| " + " | ".join(cols) + " |", "|" + "---|" * len(cols)]
     linhas += ["| " + " | ".join(str(r[c]) for c in cols) + " |" for _, r in df[cols].iterrows()]
-    def limite(g: pd.DataFrame):
-        g = g.sort_values("taxa_alvo")
-        ok = g.sem_erros.astype(bool).cumprod().astype(bool)  # verdadeiro até o 1º erro
-        return int(g[ok].taxa_alvo.max()) if ok.any() else None
+    linhas += ["", "Limite por cenário (maior taxa antes do primeiro degrau reprovado, req/s):", "",
+               "| cenário | " + " | ".join(criterios) + " |", "|---" * (len(criterios) + 1) + "|"]
+    linhas += [f"| {c} | " + " | ".join(str(limite(g, k)) for k in criterios) + " |"
+               for c, g in df.groupby("cenario", sort=False)]
+    (saida / "resumo.md").write_text("\n".join(linhas) + "\n", encoding="utf-8")
 
-    linhas += ["", "Limite sem erros por cenário (maior taxa antes do primeiro erro, req/s):", ""]
-    linhas += [f"- {c}: {limite(g)}" for c, g in df.groupby("cenario", sort=False)]
-    (saida / "resumo.md").write_text("\n".join(linhas) + "\n")
+
+def gerar_figuras(resultados: Path, saida: Path) -> None:
+    """Figuras de UMA pasta de resultados (resultados/<cenario>/...)."""
+    saida.mkdir(parents=True, exist_ok=True)
+    df = carregar(resultados)
+    rampa = df[~df.cenario.str.startswith("falha")] if not df.empty else df
+    if not rampa.empty:
+        fig_latencia(rampa, saida)
+        fig_correcao(rampa, saida)
+    if not df.empty:
+        fig_mapa_erros(df, saida)
+        tabela_markdown(df, saida)
+    fig_falha(resultados, saida)
+    print(f"figuras em {saida}/: " + ", ".join(sorted(f.name for f in saida.iterdir() if f.is_file())))
+
+
+def pastas_de_resultados(raiz: Path) -> list[Path]:
+    """Toda pasta que contém <cenario>/resumo.csv (ex.: resultados/elixir/rep_2)."""
+    return sorted({csv.parent.parent for csv in raiz.glob("**/resumo.csv")})
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--resultados", type=Path, default=Path("resultados"))
     p.add_argument("--saida", type=Path, default=Path("figuras"))
+    p.add_argument("--tudo", action="store_true",
+                   help="gera figuras para cada implementação/repetição, espelhando a árvore")
     a = p.parse_args()
-    a.saida.mkdir(parents=True, exist_ok=True)
     _estilo()
-    df = carregar(a.resultados)
-    rampa = df[~df.cenario.str.startswith("falha")] if not df.empty else df
-    if not rampa.empty:
-        fig_latencia(rampa, a.saida)
-        fig_correcao(rampa, a.saida)
-    if not df.empty:
-        fig_mapa_erros(df, a.saida)
-        tabela_markdown(df, a.saida)
-    fig_falha(a.resultados, a.saida)
-    print(f"figuras em {a.saida}/: " + ", ".join(sorted(f.name for f in a.saida.iterdir())))
+    if not a.tudo:
+        gerar_figuras(a.resultados, a.saida)
+        return
+    for pasta in pastas_de_resultados(a.resultados):
+        gerar_figuras(pasta, a.saida / pasta.relative_to(a.resultados))
 
 
 if __name__ == "__main__":

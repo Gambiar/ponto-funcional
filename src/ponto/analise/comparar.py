@@ -14,7 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 
-from .graficos import SERIES  # noqa: E402
+from .graficos import SERIES, limite  # noqa: E402
 
 IMPLEMENTACOES = {"python_imperativo": SERIES[1], "python_funcional": SERIES[0], "elixir": SERIES[6]}
 CRITERIOS = ("ok_carga", "ok_integridade", "sem_erros")
@@ -33,16 +33,6 @@ def carregar(raiz: Path) -> pd.DataFrame:
         for csv in sorted((raiz / impl).glob("**/resumo.csv"))
     ]
     return pd.concat(tabelas, ignore_index=True) if tabelas else pd.DataFrame()
-
-
-def limite(grupo: pd.DataFrame, criterio: str) -> float | None:
-    """Maior taxa antes do primeiro degrau que falha; degrau com gerador inválido encerra (C3)."""
-    g = grupo.sort_values("taxa_alvo")
-    ok = g[criterio].astype(bool)
-    if "gerador_valido" in g:
-        ok &= g["gerador_valido"].astype(bool)
-    ok = ok.cumprod().astype(bool)
-    return g.taxa_alvo[ok].max() if ok.any() else None
 
 
 def celula(g: pd.DataFrame, criterio: str) -> str:

@@ -38,7 +38,9 @@ limpar:
 # --no-deps: impede que o `run` recrie a API com a configuração padrão.
 IMPERATIVO = $(COMPOSE) -f docker-compose.yml -f compose.imperativo.yml
 ELIXIR     = $(COMPOSE) -f docker-compose.yml -f compose.elixir.yml
-SUITE      = $(COMPOSE) run --rm --no-deps carga ponto.carga.experimento --suite padrao
+REPETICOES ?= 5
+DURACAO    ?= 60
+SUITE      = $(COMPOSE) run --rm --no-deps carga ponto.carga.experimento --suite padrao --repeticoes $(REPETICOES) --duracao-suite $(DURACAO)
 
 .PHONY: comparacao comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao
 
@@ -54,10 +56,11 @@ comparar-elixir:
 	$(ELIXIR) up -d --build --wait db api
 	$(SUITE) --saida resultados/elixir
 
-figuras-comparacao:
+figuras-comparacao:  ## figuras por implementação/repetição + tabela e gráfico comparativos
+	$(COMPOSE) run --rm --no-deps carga ponto.analise.graficos --tudo --resultados resultados --saida figuras
 	$(COMPOSE) run --rm --no-deps carga ponto.analise.comparar --resultados resultados --saida figuras/comparacao
 
-comparacao: comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao
+comparacao: calibrar comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao  ## pipeline completo do artigo
 
 calibrar:       ## mede a taxa máxima que o gerador sustenta (servidor nulo)
 	$(COMPOSE) --profile ferramentas up -d --build eco
