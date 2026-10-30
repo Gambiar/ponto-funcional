@@ -45,3 +45,35 @@ def test_processado_sem_confirmacao_e_erro_de_carga():
     """C1: o cliente viu erro; do ponto de vista dele a requisição não foi aceita."""
     r = resumir([a("correto"), a("processado_sem_confirmacao")])
     assert r["erros_de_carga"] == 1 and r["disponibilidade"] == 0.5 and r["integridade"] == 1.0
+
+
+# ------------------------------------------- gerador em vários processos (C12)
+
+from datetime import datetime, timedelta  # noqa: E402
+
+from ponto.carga.rampa import agendar, repartir  # noqa: E402
+from ponto.nucleo.modelos import Registro  # noqa: E402
+
+
+def _regs(n):
+    base = datetime(2026, 11, 3, 8)
+    return [Registro(f"r{i}", i % 7 + 1, "entrada", base + timedelta(seconds=i), "d") for i in range(n)]
+
+
+def test_agenda_uniforme():
+    assert [t for _, t in agendar(_regs(4), 2)] == [0.0, 0.5, 1.0, 1.5]
+
+
+def test_repartir_preserva_tudo_e_a_ordem():
+    agenda = agendar(_regs(100), 10)
+    partes = repartir(agenda, 3)
+    assert sorted((r.id_evento, t) for p in partes for r, t in p) == sorted((r.id_evento, t) for r, t in agenda)
+    assert all([t for _, t in p] == sorted(t for _, t in p) for p in partes)
+
+
+def test_mesmo_servidor_sempre_no_mesmo_processo():
+    partes = repartir(agendar(_regs(100), 10), 3)
+    donos = {}
+    for k, parte in enumerate(partes):
+        for r, _ in parte:
+            assert donos.setdefault(r.servidor, k) == k

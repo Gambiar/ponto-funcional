@@ -50,18 +50,21 @@ services:
     environment:
       API_URL: http://api:8000
       DATABASE_URL: postgresql://ponto:ponto@db:5432/ponto
+      # um processo Python satura perto de 2000-3000 req/s; 4 processos cumprem a agenda até ~6000 (C12)
+      GERADOR_PROCESSOS: ${GERADOR_PROCESSOS:-4}
     volumes:
       - ./resultados:/app/resultados
       - ./figuras:/app/figuras
       - ./dados:/app/dados
-    cpus: 2
+    cpus: ${CARGA_CPUS:-4}
     entrypoint: ["python", "-m"]
     command: ["ponto.carga.experimento", "--suite", "padrao"]
 
-  # servidor nulo para calibrar o gerador de carga (ponto.carga.calibrar)
+  # servidor nulo para calibrar o gerador de carga (ponto.carga.calibrar);
+  # vários processos na mesma porta para que ele não seja o gargalo
   eco:
     build: .
     profiles: ["ferramentas"]
     entrypoint: ["python", "-m"]
-    command: ["ponto.carga.calibrar", "--servir"]
-    cpus: 1
+    command: ["ponto.carga.calibrar", "--servir", "--processos", "4"]
+    cpus: 4

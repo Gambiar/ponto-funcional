@@ -40,6 +40,7 @@ from ..nucleo.validacao import regras_padrao
 from .rampa import disparar
 
 API = os.getenv("API_URL", "http://localhost:8000")
+PROCESSOS = int(os.getenv("GERADOR_PROCESSOS", "1"))  # processos do gerador de carga (C12)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ponto:ponto@localhost:5432/ponto")
 
 
@@ -50,7 +51,7 @@ class Cenario:
     lote: int = 200
     espera_ms: int = 100
     tentativas: int = 8
-    taxas: tuple[int, ...] = (100, 250, 500, 1000, 1500, 2000, 3000)
+    taxas: tuple[int, ...] = (100, 250, 500, 1000, 1500, 2000, 3000, 4000, 6000)
     duracao: int = 20            # segundos de carga por degrau
     anomalias: float = 0.05
     seed: int = 42
@@ -140,7 +141,7 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
             eventos[c.falha_em] = lambda: _admin(sessao, "POST", "/admin/falha", params={"segundos": c.falha_seg})
 
         inicio = time.monotonic()
-        envios = await disparar(registros, taxa, f"{API}/registros", c.timeout, eventos)
+        envios = await disparar(registros, taxa, f"{API}/registros", c.timeout, eventos, processos=PROCESSOS)
         duracao_envio = time.monotonic() - inicio
         estado = await _esperar_fila(sessao)
         duracao_total = time.monotonic() - inicio
@@ -159,6 +160,7 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
         "cenario": c.nome,
         "seed": c.seed,
         "taxa_alvo": taxa,
+        "processos_gerador": PROCESSOS,
         "taxa_obtida": round(len(envios) / ultimo_envio, 1) if ultimo_envio else 0.0,
         "atraso_gerador_p99_ms": atraso_p99,
         "gerador_valido": atraso_p99 <= c.atraso_max_ms,
@@ -262,6 +264,8 @@ def main() -> None:
                    help="sobrescreve a duração dos degraus de rampa da suíte (ex.: 60)")
     p.add_argument("--tolerancia", type=float, default=1e-4)
     p.add_argument("--atraso-max", type=float, default=20.0, help="atraso p99 máximo do gerador (ms)")
+    p.add_argument("--processos", type=int, default=None,
+                   help="processos do gerador de carga (padrão: $GERADOR_PROCESSOS ou 1)")
     a = p.parse_args()
 
     if a.suite:
@@ -275,6 +279,9 @@ def main() -> None:
             falha_em=a.falha_em, falha_seg=a.falha_seg,
         )]
     cenarios = [replace(c, tolerancia=a.tolerancia, atraso_max_ms=a.atraso_max) for c in cenarios]
+    if a.processos:
+        global PROCESSOS
+        PROCESSOS = a.processos
 
     def rodadas():
         if a.repeticoes == 1:

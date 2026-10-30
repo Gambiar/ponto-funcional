@@ -97,9 +97,9 @@ Cada registro termina numa categoria: `correto`, erros de carga (`recusado:fila_
 **Variáveis.**
 Independentes: implementação, modo (baseline/lote), tamanho do lote, taxa de requisições, duração da queda do banco, retry ligado ou desligado.
 Dependentes: limite de taxa (por três critérios: carga, integridade e estrito), latência p50/p95/p99 (com e sem timeouts), disponibilidade, integridade e contagem por categoria de erro.
-Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU (API 1, banco 2, carga 2); um único consumidor da fila; um escalonador na BEAM.
+Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU (API 1, banco 2, gerador de carga 4, em 4 processos); um único consumidor da fila; um escalonador na BEAM.
 
-**Rigor.** 5 repetições com sementes diferentes (mediana [mín–máx]); degraus de 60 s; calibração do gerador e descarte dos degraus em que ele atrasou (> 20 ms p99); tolerância explícita para erros de integridade (10⁻⁴).
+**Rigor.** gerador de carga em 4 processos (cumpre a agenda até cerca de 6000 req/s); 5 repetições com sementes diferentes (mediana [mín–máx]); degraus de 60 s; calibração do gerador e descarte dos degraus em que ele atrasou (> 20 ms p99); tolerância explícita para erros de integridade (10⁻⁴).
 
 **Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos, falha simulada em vez de queda real. Ver [Limitações](#limitações-ameaças-à-validade).
 
@@ -133,7 +133,9 @@ Para conferir rapidamente se o ambiente funciona (~2 min):
 docker compose run --rm carga ponto.carga.experimento --cenario rapido --taxas 100,500,1000 --duracao 10
 ```
 
-Em máquinas modestas, reduza as taxas da suíte: `--suite padrao --escala 0.5`.
+Em máquinas modestas, reduza as taxas da suíte (`--suite padrao --escala 0.5`) e os recursos do gerador (`CARGA_CPUS=2 GERADOR_PROCESSOS=2 docker compose run ...`).
+
+O gerador de carga roda em **4 processos** por padrão (`GERADOR_PROCESSOS`): um processo Python só não passa de cerca de 2500 req/s. A suíte sobe até **6000 req/s**.
 
 Resultados ficam em `resultados/` e figuras em `figuras/`.
 
@@ -329,7 +331,7 @@ tests/                     pytest + Hypothesis
 
 Variáveis do serviço `api` no `docker-compose.yml`: `MODO`, `TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `CONSUMIDORES`, `POOL_MAX`. Os quatro primeiros também mudam em execução por `POST /admin/config`.
 
-Os contêineres têm limite de CPU e memória (API: 1 CPU; banco: 2 CPUs; carga: 2 CPUs) para que os resultados sejam comparáveis entre máquinas.
+Os contêineres têm limite de CPU e memória (API: 1 CPU; banco: 2 CPUs; gerador de carga: 4 CPUs, em 4 processos; total 7 núcleos) para que os resultados sejam comparáveis entre máquinas.
 
 ## Limitações (ameaças à validade)
 

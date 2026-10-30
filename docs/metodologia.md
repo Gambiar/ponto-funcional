@@ -40,7 +40,7 @@ Regras de negócio: um registro por servidor, tipo e dia (os demais são `descar
 | `python_funcional` | `src/ponto/` | núcleo puro (`nucleo/`: dataclasses congeladas, `match`, closures, `reduce`, recursão logarítmica) + casca imperativa (`casca/`). Retry e falha simulada como decoradores. |
 | `elixir` | `elixir/` | núcleo puro em `Ponto.Nucleo`; fila como processo `GenServer` com estado imutável; retry, falha e tradução de erros compostos com `\|>`; contadores atômicos; Bandit + Postgrex. |
 
-Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e SQL, limites de contêiner (API 1 CPU, banco 2 CPUs, carga 2 CPUs), parâmetros (`TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `POOL_MAX`) e **um único consumidor** da fila (`CONSUMIDORES=1`; as versões imperativa e Elixir não leem essa variável). A BEAM roda com `+S 1:1` (um escalonador), equivalente ao processo único do Uvicorn.
+Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e SQL, limites de contêiner (API 1 CPU, banco 2 CPUs, gerador de carga 4 CPUs), parâmetros (`TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `POOL_MAX`) e **um único consumidor** da fila (`CONSUMIDORES=1`; as versões imperativa e Elixir não leem essa variável). A BEAM roda com `+S 1:1` (um escalonador), equivalente ao processo único do Uvicorn.
 
 ---
 
@@ -63,6 +63,7 @@ Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e 
 
 - **Taxa constante:** o agendamento usa a posição na lista, não o horário do registro (ver C10).
 - **Validade do gerador:** cada degrau registra o atraso p99 entre o horário agendado e o envio real. Acima de 20 ms (`--atraso-max`), o degrau é marcado `gerador_valido=False` e não conta para o limite (C3).
+- **Vários processos (C12):** a agenda é calculada uma vez e repartida entre `GERADOR_PROCESSOS` processos (padrão 4) que partem do mesmo instante zero. A repartição é por servidor, então os registros de um servidor saem sempre do mesmo processo e na ordem, como viriam do mesmo relógio de ponto.
 - **Calibração:** `make calibrar` mede, contra um servidor nulo (`eco`), a taxa máxima que o gerador sustenta. Esse teto deve ser reportado no artigo.
 
 ---
@@ -127,8 +128,8 @@ O limite de um cenário é a maior taxa antes do primeiro degrau reprovado, cons
 
 | Cenário | Modo | Taxas (req/s) | Falha | Tentativas | Objetivo |
 |---|---|---|---|---|---|
-| `baseline` | baseline | 100 → 3000 | — | 8 | referência sem fila |
-| `lote_50`, `lote_200`, `lote_1000` | lote | 100 → 3000 | — | 8 | efeito do tamanho do lote |
+| `baseline` | baseline | 100 → 6000 | — | 8 | referência sem fila |
+| `lote_50`, `lote_200`, `lote_1000` | lote | 100 → 6000 | — | 8 | efeito do tamanho do lote |
 | `falha_com_retry` | lote | 500 | 10 s a partir de 5 s | 8 | recuperação com retry |
 | `falha_sem_retry` | lote | 500 | 10 s | 1 | perda sem retry |
 | `falha_com_retry_20s`, `_30s` | lote | 500 | 20 s, 30 s | 8 | onde o retry deixa de bastar (C8) |
@@ -183,12 +184,13 @@ docker compose run --rm --no-deps carga ponto.analise.comparar
 | **C9** | Uma execução por cenário, sem medida de dispersão; degraus de 20 s talvez curtos para o regime estável da fila. | Diferenças entre `lote_50/200/1000` menores que o ruído esperado. | `--repeticoes N` (sementes diferentes, em `rep_k/`); `--duracao-suite 60`; `comparar` reporta mediana [mín–máx]. |
 | **C10** | Os picos de turno (7h, 13h, 18h) não produziam picos de carga: o envio é agendado pela posição na lista. | Leitura de `rampa.disparar`. | Decisão: o experimento é descrito como **taxa constante**. Os turnos afetam só a ordem dos registros. Agendar pelo horário do registro fica como trabalho futuro. |
 | **C11** | A primeira versão deste documento afirmava que, no baseline, a falha "vira 503". Só é verdade **sem** retry. Com 8 tentativas, a requisição fica presa até 16,2 s no servidor, o cliente desiste em 5 s (`timeout`) e, quando o banco volta, o registro é gravado: `processado_sem_confirmacao`. | Revisão da lógica: backoff acumulado (16,2 s) > timeout do cliente (5 s). | Texto de H3 e C7 corrigido. É um achado para a discussão: um retry mais longo que o timeout do cliente transforma uma recusa explícita (503, o cliente sabe que deve reenviar) numa resposta ambígua (o cliente não sabe se gravou). |
+| **C12** | Mesmo com C3 marcando os degraus inválidos, o gerador num único processo impedia de **estressar** o sistema: acima de cerca de 2500 req/s, nada era medido. | Calibração contra o servidor nulo, mesma máquina, 5 s por taxa: com 1 processo, 3000 req/s saíram a 2750/s com atraso p99 de 506 ms; com 4 processos, 3000 req/s com 14 ms e 4000 req/s com 14 ms. A 6000 req/s o gerador ainda cumpre a agenda (14 ms), e o gargalo passa a ser o servidor nulo de um processo. | Gerador em vários processos (`--processos`, `GERADOR_PROCESSOS=4`), repartição por servidor, instante zero comum; contêiner de carga com 4 CPUs; servidor nulo com 4 processos (`SO_REUSEPORT`); rampa estendida até 6000 req/s; coluna `processos_gerador` no resumo. |
 
 ### 9.3 Limitações conhecidas (ameaças à validade)
 
 - **Oráculo e sistema compartilham as regras** (`regras_padrao`) na versão funcional: um bug de regra não aparece no esperado ajustado, só em `acerto_gabarito`. Para as versões imperativa e Elixir, o oráculo é independente.
 - **Falha simulada** dentro da API, e não queda real do banco. Recomenda-se ao menos uma execução com `docker compose stop db` (erros de pool e transação interrompida).
-- **Uma única máquina:** os limites de CPU somam 5 núcleos dentro da VM do Docker Desktop (WSL2). Reportar CPU, RAM e configuração do WSL.
+- **Uma única máquina:** os limites de CPU somam 7 núcleos (máquina de desenvolvimento: 12 núcleos lógicos, 16 GB) dentro da VM do Docker Desktop (WSL2). Reportar CPU, RAM e configuração do WSL.
 - **Ordem fixa dos degraus**, do menor para o maior, sem reiniciar a API: há efeito de aquecimento, pequeno.
 - **Dados sintéticos** num único dia; não exercitam virada de dia nem múltiplos dias.
 - **Um processo na API:** a fila vive na memória, e um 202 se perde se o processo cair (vale para as três implementações).
