@@ -1,13 +1,117 @@
 # Ponto Funcional
 
-Pipeline de registro de ponto em Python, estruturado como **núcleo funcional e casca imperativa**, com experimento automatizado que mede **até qual taxa de requisições o serviço opera sem erros** e **mapeia os tipos de erro** que surgem depois desse limite.
-
-Trabalho final da disciplina de Programação Funcional (UFPR).
+Trabalho final da disciplina de Programação Funcional (mestrado, UFPR).
 Autores: Sergio Andrew Farias, Vinicius Camargo Prattes.
 
 ---
 
-> Metodologia detalhada, hipóteses e registro de todas as correções: [`docs/metodologia.md`](docs/metodologia.md).
+## O que é
+
+Um serviço de **registro de ponto eletrônico** (servidores públicos registrando entrada e saída) submetido a um **experimento de carga controlado**, construído para responder a uma pergunta:
+
+> **Usar conceitos de programação funcional muda a velocidade máxima que o serviço aguenta sem erros e a quantidade e o tipo de erros que aparecem quando ele passa desse limite?**
+
+O cenário é realista para o problema: no início de cada turno (7h, 13h, 18h) milhares de pessoas registram ponto quase ao mesmo tempo. O serviço não pode perder registros, gravar duplicatas nem aceitar registros inválidos, e precisa continuar correto mesmo quando o banco de dados cai.
+
+Para responder à pergunta, o **mesmo serviço** foi escrito de três formas e todas passam pelo **mesmo experimento**, que mede vazão, latência e cada erro, registro a registro.
+
+---
+
+## O que foi criado
+
+| # | Componente | Para que serve | Onde |
+|---|---|---|---|
+| 1 | **Serviço de ponto (API HTTP)** em três versões com o mesmo contrato | objeto de estudo | `src/ponto/` (funcional), `src/ponto_imperativo/` (imperativa), `elixir/` (Elixir) |
+| 2 | **Gerador de dados sintéticos com gabarito** | cria servidores e registros fictícios, com anomalias, e o desfecho esperado de cada um | `src/ponto/dados/gerador.py` |
+| 3 | **Oráculo** | implementação de referência, sequencial e pura, que calcula o desfecho correto de qualquer conjunto de registros | `src/ponto/nucleo/referencia.py` |
+| 4 | **Gerador de carga em malha aberta** e calibração | envia os registros numa taxa exata (req/s) e mede o próprio limite | `src/ponto/carga/rampa.py`, `calibrar.py` |
+| 5 | **Reconciliação e taxonomia de erros** | compara o que foi enviado, o que o cliente recebeu e o que ficou no banco, e classifica cada erro | `src/ponto/dados/reconciliacao.py` |
+| 6 | **Experimento automatizado** | rampa de taxas, cenários de falha, repetições, critérios de limite | `src/ponto/carga/experimento.py` |
+| 7 | **Análise** | figuras e tabelas por implementação e comparativas | `src/ponto/analise/` |
+| 8 | **Testes** | unitários e baseados em propriedades (Hypothesis), sem precisar de banco | `tests/` |
+| 9 | **Ambiente reprodutível** | Docker Compose com limites fixos de CPU e memória | `docker-compose.yml`, `compose.*.yml`, `Makefile` |
+| 10 | **Metodologia e registro de correções** | hipóteses, desenho do experimento e todas as correções feitas no processo | [`docs/metodologia.md`](docs/metodologia.md) |
+
+### As três versões do serviço
+
+| Versão | Ideia | Por que existe |
+|---|---|---|
+| **Python imperativo** | estado mutável compartilhado, laços, if/elif, regras misturadas com o acesso ao banco | **grupo de controle**: o jeito "tradicional" de escrever o mesmo serviço |
+| **Python funcional** | **núcleo funcional** (funções puras, dados imutáveis, pattern matching, funções de ordem superior, recursão) e **casca imperativa** (rede, banco, fila) | a versão principal; mesmo runtime do controle, só muda o **estilo** |
+| **Elixir** | linguagem funcional: imutabilidade garantida pela linguagem, processos leves da BEAM, fila como processo `GenServer` | mesmo estilo funcional, outro **runtime** |
+
+Comparar imperativo × funcional (mesmo Python) isola o efeito do **estilo**. Comparar Python funcional × Elixir isola o efeito da **linguagem/runtime**.
+
+---
+
+## A lógica do serviço
+
+Como um registro de ponto é processado, nas três versões:
+
+1. **Chega** um JSON: `{id_evento, servidor, tipo, instante, dispositivo}`.
+2. **Interpretar** (função pura): por pattern matching, converte o JSON num registro imutável ou recusa o formato (422).
+3. **Validar** (função pura): as regras são funções guardadas numa lista; vale a primeira violada:
+   tipo diferente de entrada/saída → `tipo_invalido`; servidor fora do cadastro → `servidor_inexistente`; antes das 6h → `fora_da_jornada`.
+4. **Encaminhar**, conforme o modo:
+   - **baseline**: grava na própria requisição e responde 201 com o desfecho;
+   - **lote**: põe numa fila e responde **202 (aceito)** na hora. Se a fila estiver cheia, responde 503 (*back-pressure*). Um consumidor junta até N registros ou espera até T ms e grava o lote.
+5. **Gravar** numa única transação: ordenar por horário (em duplicatas, o mais antigo vence), inserir entradas, consultar quais servidores têm entrada no dia, rejeitar saídas sem entrada, inserir saídas e **decidir o desfecho** de cada registro (função pura): `gravado`, `descartado:duplicado` ou `rejeitado:<motivo>`.
+6. **Resiliência**, composta em camadas sobre a gravação (funções de ordem superior): **retry** com espera exponencial se o banco estiver fora; **falha simulada** para o experimento; e **bisseção recursiva**, que divide o lote ao meio até isolar um registro corrompido, gravando todo o resto.
+
+A ideia central da versão funcional é que **toda decisão de negócio é uma função pura** (sem banco, rede ou relógio). Isso permite testar as regras sem infraestrutura e, principalmente, escrever um **oráculo** que diz qual seria o resultado correto, contra o qual qualquer versão pode ser conferida.
+
+---
+
+## A lógica do experimento
+
+```
+para cada implementação, repetição, cenário e taxa (req/s):
+  1. gerar base sintética nova + gabarito (semente fixa → reprodutível)
+  2. zerar banco e cadastro; configurar a API (modo, lote, tentativas)
+  3. disparar a base na taxa alvo, em malha aberta (opcional: derrubar o banco no segundo 5)
+  4. esperar a API terminar de gravar tudo
+  5. ler o banco e reconciliar registro a registro
+  6. calcular métricas e decidir se o degrau passou → próxima taxa
+```
+
+Três decisões sustentam a validade da medição:
+
+- **Malha aberta:** cada requisição sai no horário agendado, mesmo que as anteriores não tenham respondido. Se o gerador esperasse as respostas, um servidor lento reduziria a carga sem ninguém perceber e a saturação ficaria escondida.
+- **Gabarito + oráculo:** existem duas definições independentes do resultado correto (a que o gerador construiu e a que o oráculo calcula), e um teste garante que concordam.
+- **Esperado ajustado:** se a API recusou a entrada de um servidor (503), rejeitar a saída dele é **correto**. Por isso o esperado é recalculado pelo oráculo só com o que de fato entrou no sistema, separando **erros de carga** (o registro nem entrou) de **erros de integridade** (entrou e foi processado errado ou perdido).
+
+Cada registro termina numa categoria: `correto`, erros de carga (`recusado:fila_cheia`, `timeout`, `processado_sem_confirmacao`...) ou erros de integridade (`perda_silenciosa`, `divergente:saida_antes_da_entrada`...). A tabela completa está em [Taxonomia de erros](#taxonomia-de-erros).
+
+---
+
+## Metodologia (resumo)
+
+**Hipóteses**, escritas antes das execuções finais:
+
+| | Comparação | Hipótese |
+|---|---|---|
+| **H1** | imperativo × funcional (estilo) | vazão e erros sob carga **não** mudam, porque o gargalo é o banco e os erros vêm da arquitetura. O ganho do estilo funcional aparece em testabilidade e clareza. |
+| **H2** | Python funcional × Elixir (runtime) | Elixir mantém a latência de cauda (p99) menor perto da saturação; os tipos de erro não mudam. |
+| **H3** | baseline × lote (arquitetura) | o lote aguenta mais carga, mas troca durabilidade por vazão: sob queda do banco, perde registros já confirmados (202). |
+
+**Variáveis.**
+Independentes: implementação, modo (baseline/lote), tamanho do lote, taxa de requisições, duração da queda do banco, retry ligado ou desligado.
+Dependentes: limite de taxa (por três critérios: carga, integridade e estrito), latência p50/p95/p99 (com e sem timeouts), disponibilidade, integridade e contagem por categoria de erro.
+Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU (API 1, banco 2, carga 2); um único consumidor da fila; um escalonador na BEAM.
+
+**Rigor.** 5 repetições com sementes diferentes (mediana [mín–máx]); degraus de 60 s; calibração do gerador e descarte dos degraus em que ele atrasou (> 20 ms p99); tolerância explícita para erros de integridade (10⁻⁴).
+
+**Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos, falha simulada em vez de queda real. Ver [Limitações](#limitações-ameaças-à-validade).
+
+O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C11, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md). As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
+
+### Estado atual
+
+- Versões Python: 43 testes passando.
+- Versão Elixir: escrita, ainda **não compilada nem executada** (aguarda o ambiente Docker).
+- `exemplo/`: resultados de uma execução **anterior** às correções metodológicas; servem para mostrar a evolução do método, não como resultado final.
+
+---
 
 ## Como rodar
 
@@ -35,7 +139,7 @@ Resultados ficam em `resultados/` e figuras em `figuras/`.
 
 ---
 
-## O que o sistema faz
+## Fluxo detalhado e regras de negócio
 
 ```
 Gerador de carga ──POST /registros──▶ API (FastAPI)
