@@ -24,6 +24,8 @@ defmodule Ponto.Estado do
              :registros_corrompidos, :retries, :soma_tamanhos, :falha_ate]
 
   def iniciar(config) do
+    # muda a cada início da aplicação: o experimento detecta reinícios no meio do degrau
+    :persistent_term.put({__MODULE__, :instancia}, Base.encode16(:crypto.strong_rand_bytes(16), case: :lower))
     :persistent_term.put({__MODULE__, :inicio}, System.monotonic_time(:millisecond))
     :persistent_term.put({__MODULE__, :contadores}, :counters.new(map_size(@indices), [:write_concurrency]))
     definir_cadastro(MapSet.new())
@@ -44,6 +46,7 @@ defmodule Ponto.Estado do
 
   # ------------------------------------------------------------ configuração
 
+  def instancia, do: :persistent_term.get({__MODULE__, :instancia})
   def config, do: :persistent_term.get({__MODULE__, :config})
   def validar, do: :persistent_term.get({__MODULE__, :validar})
   def gravador, do: :persistent_term.get({__MODULE__, :gravador})

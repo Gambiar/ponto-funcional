@@ -1,0 +1,26 @@
+# Perfil para máquinas com 4 núcleos (escolhido sozinho pelo Makefile quando nproc < 8; C15).
+# Cada serviço ganha núcleos só seus: banco 0, API 1, gerador 2-3.
+# Diferenças em relação ao perfil de 8 núcleos, que precisam ir para o artigo:
+#  - banco com 1 CPU em vez de 2: o gargalo do banco aparece em taxas menores;
+#  - gerador com 2 processos: o teto dele cai (medir com `make calibrar`); degraus acima
+#    do teto são marcados como inválidos automaticamente (gerador_valido=False);
+#  - nenhum núcleo livre para o sistema: o Docker e o SO disputam com os serviços.
+# A API continua com 1 CPU (e 1 escalonador na BEAM), então a comparação entre as três
+# implementações segue justa; o que muda é o teto absoluto.
+services:
+  db:
+    cpus: 1
+    cpuset: "0"
+  api:
+    cpus: 1
+    cpuset: "1"
+  carga:
+    cpus: 2
+    cpuset: "2-3"
+    environment:
+      GERADOR_PROCESSOS: 2
+      PERFIL_CPU: "4"
+  eco:
+    cpus: 2
+    cpuset: "2-3"
+    command: ["ponto.carga.calibrar", "--servir", "--processos", "2"]

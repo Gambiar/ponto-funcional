@@ -40,6 +40,7 @@ from ..nucleo.validacao import regras_padrao
 from .rampa import disparar
 
 API = os.getenv("API_URL", "http://localhost:8000")
+PERFIL_CPU = os.getenv("PERFIL_CPU", "livre")  # perfil de núcleos do compose (C15)
 PROCESSOS = int(os.getenv("GERADOR_PROCESSOS", "1"))  # processos do gerador de carga (C12)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ponto:ponto@localhost:5432/ponto")
 
@@ -94,14 +95,17 @@ async def _admin(sessao, metodo, caminho, **kw):
         return await r.json()
 
 
-async def _esperar_fila(sessao, limite=300.0) -> dict:
+async def _esperar_fila(sessao, limite=300.0) -> tuple[dict, bool]:
+    """Espera a API ficar ociosa. Devolve (estado, drenou); drenou=False se o
+    limite estourou, e o degrau não pode ser usado (a fila ainda gravava)."""
     inicio = time.monotonic()
     while time.monotonic() - inicio < limite:
         estado = await _admin(sessao, "GET", "/admin/estado")
         if estado["ocioso"]:
-            return estado
+            return estado, True
         await asyncio.sleep(0.5)
-    return await _admin(sessao, "GET", "/admin/estado")
+    estado = await _admin(sessao, "GET", "/admin/estado")
+    return estado, bool(estado["ocioso"])
 
 
 async def _ler_banco() -> dict[str, Desfecho]:
@@ -133,8 +137,11 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
         await _admin(sessao, "POST", "/admin/config", json={
             "modo": c.modo, "tamanho_lote": c.lote, "espera_ms": c.espera_ms, "tentativas": c.tentativas})
         # requisições atrasadas do degrau anterior não podem cair no banco novo
-        await _esperar_fila(sessao)
+        _, drenou_antes = await _esperar_fila(sessao)
+        # se não drenou, gravações antigas podem cair no banco novo: o degrau fica inválido
         await _admin(sessao, "POST", "/admin/reset", json={"servidores": n_servidores})
+        # identifica o processo da API: se mudar até o fim, ela reiniciou no meio do degrau
+        instancia_inicio = (await _admin(sessao, "GET", "/admin/estado")).get("instancia")
 
         eventos = {}
         if c.falha_em is not None:
@@ -143,7 +150,8 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
         inicio = time.monotonic()
         envios = await disparar(registros, taxa, f"{API}/registros", c.timeout, eventos, processos=PROCESSOS)
         duracao_envio = time.monotonic() - inicio
-        estado = await _esperar_fila(sessao)
+        estado, drenou_depois = await _esperar_fila(sessao)
+        drenou = drenou_antes and drenou_depois
         duracao_total = time.monotonic() - inicio
 
     banco = await _ler_banco()
@@ -161,9 +169,15 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
         "seed": c.seed,
         "taxa_alvo": taxa,
         "processos_gerador": PROCESSOS,
+        "perfil_cpu": PERFIL_CPU,
         "taxa_obtida": round(len(envios) / ultimo_envio, 1) if ultimo_envio else 0.0,
         "atraso_gerador_p99_ms": atraso_p99,
         "gerador_valido": atraso_p99 <= c.atraso_max_ms,
+        # o degrau só vale se a fila drenou e a API não reiniciou (perderia fila, contadores e config)
+        "drenou": drenou,
+        "api_sem_reinicio": estado.get("instancia") == instancia_inicio,
+        "degrau_valido": atraso_p99 <= c.atraso_max_ms and drenou and estado.get("instancia") == instancia_inicio,
+        "incidente": descrever_incidente(atraso_p99 <= c.atraso_max_ms, drenou, estado.get("instancia") == instancia_inicio),
         "duracao_envio_s": round(duracao_envio, 1),
         "duracao_ate_drenar_s": round(duracao_total, 1),
         "lat_p50_ms": round(percentil(lat_ok, 50) * 1000, 1),
@@ -185,7 +199,47 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
     return resumo
 
 
+def descrever_incidente(gerador_ok: bool, drenou: bool, sem_reinicio: bool, falha: str = "") -> str:
+    """Motivos que invalidam o degrau, separados por ';' (vazio = degrau válido). Vão para o
+    resumo e para a tabela de validade dos resultados finais (C13)."""
+    motivos = [m for m, ruim in (("api_reiniciou", not sem_reinicio), ("fila_nao_drenou", not drenou),
+                                 ("gerador_atrasou", not gerador_ok)) if ruim]
+    if falha:
+        motivos.append(f"falha_execucao: {falha}")
+    return "; ".join(motivos)
+
+
+async def _esperar_api(limite: float = 180.0) -> bool:
+    """Depois de uma falha, espera a API voltar (restart: on-failure) antes do próximo degrau."""
+    inicio = time.monotonic()
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3)) as sessao:
+        while time.monotonic() - inicio < limite:
+            try:
+                async with sessao.get(f"{API}/saude") as r:
+                    if r.status == 200:
+                        return True
+            except (aiohttp.ClientError, TimeoutError):
+                pass
+            await asyncio.sleep(2)
+    return False
+
+
+def degrau_com_falha(c: Cenario, taxa: int, erro: BaseException) -> dict:
+    """Linha do resumo para um degrau que não chegou ao fim (API caiu, banco fora, etc.).
+    Fica registrado como inválido em vez de derrubar a suíte inteira."""
+    falha = f"{type(erro).__name__}: {erro}"[:200].replace("\n", " ")
+    return {
+        "cenario": c.nome, "seed": c.seed, "taxa_alvo": taxa, "processos_gerador": PROCESSOS,
+        "gerador_valido": False, "drenou": False, "api_sem_reinicio": False, "degrau_valido": False,
+        "incidente": descrever_incidente(True, True, True, falha),
+        "ok_carga": False, "ok_integridade": False, "sem_erros": False,
+    }
+
+
 def _imprimir(r: dict) -> None:
+    if "lat_p99_ms" not in r:
+        print(f"  [INV] {r['taxa_alvo']:>5} req/s | {r['incidente']}", flush=True)
+        return
     erros = {k[2:]: v for k, v in r.items() if k.startswith("n_")}
     marca = "OK " if r["sem_erros"] else "ERR"
     print(f"  [{marca}] {r['taxa_alvo']:>5} req/s (obtido {r['taxa_obtida']:>7}) | "
@@ -207,7 +261,7 @@ def limite(resumos: list[dict], criterio: str = "sem_erros") -> int | None:
     """Maior taxa antes do primeiro degrau que falha no critério.
     Degraus em que o gerador não cumpriu a agenda encerram a contagem (C3)."""
     ordenados = sorted(resumos, key=lambda r: r["taxa_alvo"])
-    ok = list(takewhile(lambda r: r.get("gerador_valido", True) and r[criterio], ordenados))
+    ok = list(takewhile(lambda r: r.get("degrau_valido", r.get("gerador_valido", True)) and r[criterio], ordenados))
     return ok[-1]["taxa_alvo"] if ok else None
 
 
@@ -223,10 +277,18 @@ async def rodar_cenario(c: Cenario, raiz: Path) -> list[dict]:
 
     resumos, falhas_seguidas = [], 0
     for taxa in c.taxas:
-        r = await rodar_degrau(c, taxa, pasta)
+        try:
+            r = await rodar_degrau(c, taxa, pasta)
+        except Exception as erro:  # API caiu, banco fora, resposta inesperada...
+            r = degrau_com_falha(c, taxa, erro)
+            if not await _esperar_api():
+                resumos.append(r)
+                _imprimir(r)
+                print("  API não voltou em 180 s: cenário interrompido")
+                break
         resumos.append(r)
         _imprimir(r)
-        passou = r["ok_carga"] and r["ok_integridade"] and r["gerador_valido"]
+        passou = r["ok_carga"] and r["ok_integridade"] and r["degrau_valido"]
         falhas_seguidas = 0 if passou else falhas_seguidas + 1
         if c.falha_em is None and falhas_seguidas >= c.parar_apos:
             print("  rampa interrompida: limite ultrapassado")
@@ -237,8 +299,9 @@ async def rodar_cenario(c: Cenario, raiz: Path) -> list[dict]:
     _escrever_csv(pasta / "resumo.csv", [{k: r.get(k, 0) for k in colunas} for r in resumos])
     for criterio in ("sem_erros", "ok_carga", "ok_integridade"):
         print(f"  limite ({criterio}): {limite(resumos, criterio)} req/s")
-    if not all(r["gerador_valido"] for r in resumos):
-        print(f"  atenção: gerador atrasou mais de {c.atraso_max_ms} ms em algum degrau (degrau inválido)")
+    for r in resumos:
+        if r.get("incidente"):
+            print(f"  atenção: degrau {r['taxa_alvo']} req/s inválido ({r['incidente']})")
     return resumos
 
 
@@ -260,6 +323,9 @@ def main() -> None:
     p.add_argument("--saida", type=Path, default=Path("resultados"))
     p.add_argument("--repeticoes", type=int, default=1,
                    help="repete tudo com sementes diferentes, em <saida>/rep_<k> (C9)")
+    p.add_argument("--rep", type=int, default=None,
+                   help="roda só a repetição K (semente de rep_K) direto em --saida; "
+                        "permite intercalar implementações entre repetições (C14)")
     p.add_argument("--duracao-suite", type=int, default=None,
                    help="sobrescreve a duração dos degraus de rampa da suíte (ex.: 60)")
     p.add_argument("--tolerancia", type=float, default=1e-4)
@@ -284,6 +350,9 @@ def main() -> None:
         PROCESSOS = a.processos
 
     def rodadas():
+        if a.rep is not None:
+            yield a.saida, [replace(c, seed=c.seed + 1000 * a.rep) for c in cenarios]
+            return
         if a.repeticoes == 1:
             yield a.saida, cenarios
             return

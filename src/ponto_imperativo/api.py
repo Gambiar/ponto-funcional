@@ -21,11 +21,14 @@ import asyncio
 import logging
 import os
 import time
+import uuid
 from datetime import datetime
 
 import asyncpg
 from fastapi import Body, FastAPI
 from fastapi.responses import JSONResponse
+
+INSTANCIA = uuid.uuid4().hex  # muda a cada início do processo
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("ponto.imperativo")
@@ -385,6 +388,7 @@ async def falha(segundos: float = 10.0):
 async def situacao():
     s = servico
     return {
+        "instancia": INSTANCIA,
         "config": {"modo": s.modo, "tamanho_lote": s.tamanho_lote, "espera_ms": s.espera_ms,
                    "tentativas": s.tentativas},
         "fila": s.fila.qsize(),

@@ -58,6 +58,7 @@ defmodule Ponto.Api do
     lotes = Estado.ler(:lotes)
 
     responder(conn, 200, %{
+      instancia: Estado.instancia(),
       config: Estado.config(),
       fila: Fila.tamanho(),
       em_processamento: Estado.ler(:em_processamento),

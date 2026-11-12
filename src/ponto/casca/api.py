@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+import uuid
 from collections.abc import Sequence
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
@@ -32,6 +33,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ponto:ponto@localhost:543
 FILA_CAPACIDADE = int(os.getenv("FILA_CAPACIDADE", "10000"))
 CONSUMIDORES = int(os.getenv("CONSUMIDORES", "1"))
 POOL_MAX = int(os.getenv("POOL_MAX", "20"))
+# muda a cada início do processo: o experimento detecta reinícios no meio do degrau
+INSTANCIA = uuid.uuid4().hex
 
 ERROS_DE_CONEXAO = (
     ConnectionError,
@@ -195,6 +198,7 @@ async def situacao():
     p = estado.processador
     c = p.contadores
     return {
+        "instancia": INSTANCIA,
         "config": asdict(estado.config),
         "fila": p.fila.qsize(),
         "em_processamento": p.em_processamento,

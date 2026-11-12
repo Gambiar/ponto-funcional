@@ -6,6 +6,10 @@ services:
       POSTGRES_PASSWORD: ponto
       POSTGRES_DB: ponto
     command: ["postgres", "-c", "max_connections=200", "-c", "synchronous_commit=on"]
+    # volume em vez da camada do contêiner: E/S mais estável e próxima de um disco real (C13).
+    # Não é para guardar dados: o experimento zera o banco a cada degrau.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ponto"]
       interval: 2s
@@ -68,3 +72,7 @@ services:
     entrypoint: ["python", "-m"]
     command: ["ponto.carga.calibrar", "--servir", "--processos", "4"]
     cpus: 4
+
+volumes:
+  pgdata:
+    name: ponto_pgdata

@@ -12,7 +12,6 @@ defmodule Ponto.Retry do
   Funções de ordem superior para resiliência: recebem uma função e devolvem
   outra (o equivalente aos decoradores de `ponto.util.retry`).
   """
-  require Logger
 
   @doc "Repete com backoff exponencial: base, 2*base, 4*base... até `maximo` (s)."
   def com_retry(fun, tentativas, opts \\ []) do

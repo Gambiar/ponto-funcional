@@ -99,18 +99,18 @@ Cada registro termina numa categoria: `correto`, erros de carga (`recusado:fila_
 **Variáveis.**
 Independentes: implementação, modo (baseline/lote), tamanho do lote, taxa de requisições, duração da queda do banco, retry ligado ou desligado.
 Dependentes: limite de taxa (por três critérios: carga, integridade e estrito), latência p50/p95/p99 (com e sem timeouts), disponibilidade, integridade e contagem por categoria de erro.
-Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU (API 1, banco 2, gerador de carga 4, em 4 processos); um único consumidor da fila; um escalonador na BEAM.
+Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU com núcleos dedicados (API 1; banco 2 e gerador 4 em 4 processos com 8+ núcleos, ou banco 1 e gerador 2 em 2 processos com 4 núcleos); um único consumidor da fila; um escalonador na BEAM.
 
 **Rigor.** gerador de carga em 4 processos (cumpre a agenda até cerca de 6000 req/s); 5 repetições com sementes diferentes (mediana [mín–máx]); degraus de 60 s; calibração do gerador e descarte dos degraus em que ele atrasou (> 20 ms p99); tolerância explícita para erros de integridade (10⁻⁴).
 
 **Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos, falha simulada em vez de queda real. Ver [Limitações](#limitações-ameaças-à-validade).
 
-O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C12, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
+O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C15, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
 
 ### Estado atual
 
-- Versões Python: 46 testes passando; gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
-- Versão Elixir: escrita, ainda **não compilada nem executada** (aguarda o ambiente Docker).
+- Testes: 51 em Python (pytest) e 13 em Elixir (ExUnit), sem banco (`make testes`); gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
+- Versão Elixir: compila sem avisos e passa no teste de contrato, como as duas versões Python (`make contrato`).
 - Execução final: planejada numa **VM Linux dedicada**; ver [`docs/vm.md`](docs/vm.md).
 - `exemplo/`: resultados de uma execução **anterior** às correções metodológicas; servem para mostrar a evolução do método, não como resultado final.
 
@@ -118,7 +118,9 @@ O desenho completo e o **registro de todas as correções** feitas ao longo do t
 
 ## Como rodar
 
-Requisito: Docker com Docker Compose (Linux, macOS ou Windows) e **pelo menos 8 núcleos** (os contêineres usam 7). Nada mais precisa ser instalado.
+Requisito: Docker com Docker Compose, `make` e **pelo menos 4 núcleos**. Nada mais precisa ser instalado: Elixir 1.20.3/OTP 29, Python 3.12, Postgres 16 e as dependências vêm nas imagens, com versões fixadas (`mix.lock`).
+
+Pelo `make`, o perfil de CPU é escolhido pelo número de núcleos (`compose.cpuset.yml` com 8 ou mais, `compose.4cpu.yml` com 4 a 7; ver [`docs/vm.md`](docs/vm.md)). Os comandos `docker compose` diretos abaixo usam o perfil de 8 núcleos sem fixação; numa máquina de 4 núcleos, prefira o `make`.
 
 > **Para a execução do artigo, use uma VM Linux dedicada:** tamanho, preparação, tempo estimado (12–15 h para a comparação completa) e o que registrar estão em [`docs/vm.md`](docs/vm.md).
 
@@ -131,7 +133,9 @@ docker compose down                                                           # 
 ```
 
 Com `make`: `make subir`, `make testes`, `make experimento`, `make graficos`, ou `make tudo`.
-Antes de medir: `make ambiente` (registra o hardware) e `make calibrar` (teto do gerador de carga).
+Antes de medir: `make ambiente` (registra o hardware e o perfil de CPU), `make construir testes contrato` (imagens, testes Python e Elixir, e as três APIs conferidas contra o gabarito) e `make calibrar` (teto do gerador de carga).
+
+Comparação completa: `make comparacao` (repetições intercaladas entre as implementações, banco novo a cada uma).
 
 Para conferir rapidamente se o ambiente funciona (~2 min):
 
@@ -294,8 +298,9 @@ Saídas:
 resultados/<impl>/rep_<k>/<cenario>/   resumo.csv, envios_<taxa>.csv, erros_<taxa>.csv, config.json
 figuras/<impl>/rep_<k>/                latencia_p99.png, correcao.png, mapa_de_erros.png,
                                        falha_linha_do_tempo.png, resumo.md (limites pelos 3 critérios)
-figuras/comparacao/                    comparacao.md (limites: mediana [mín–máx] por implementação),
-                                       comparacao_p99.png
+figuras/comparacao/                    comparacao.md (limites: mediana [mín–máx] por implementação,
+                                       e "Validade da execução": degraus inválidos e o motivo),
+                                       comparacao_p99.png, validade.png
 ```
 
 Ou, passo a passo (troca só o serviço `api`):

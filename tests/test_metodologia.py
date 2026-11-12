@@ -19,6 +19,12 @@ def test_limite_ignora_degraus_com_gerador_invalido():
     assert limite(rs, "ok_carga") == 1000
 
 
+def test_limite_ignora_degrau_invalido_por_reinicio_ou_fila():
+    """C13: API reiniciada ou fila não drenada invalidam o degrau, mesmo sem erros."""
+    rs = [degrau(1000), {**degrau(2000), "degrau_valido": False}, degrau(3000)]
+    assert limite(rs, "sem_erros") == 1000
+
+
 def test_criterios_separados():
     """C5: um degrau pode passar em carga e falhar em integridade."""
     rs = [degrau(100), degrau(500, ok_integridade=False)]

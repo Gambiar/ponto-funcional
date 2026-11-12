@@ -64,11 +64,12 @@ CRITERIOS = ("ok_carga", "ok_integridade", "sem_erros")
 
 
 def limite(grupo: pd.DataFrame, criterio: str = "sem_erros") -> int | None:
-    """Maior taxa antes do primeiro degrau reprovado; degrau com gerador inválido encerra (C3)."""
+    """Maior taxa antes do primeiro degrau reprovado; degrau inválido encerra (C3, C13)."""
     g = grupo.sort_values("taxa_alvo")
     ok = g[criterio].astype(bool)
-    if "gerador_valido" in g:
-        ok &= g["gerador_valido"].astype(bool)
+    coluna = "degrau_valido" if "degrau_valido" in g else "gerador_valido"
+    if coluna in g:
+        ok &= g[coluna].astype(bool)
     ok = ok.cumprod().astype(bool)
     return int(g.taxa_alvo[ok].max()) if ok.any() else None
 
@@ -93,6 +94,14 @@ def carregar(raiz: Path) -> pd.DataFrame:
     return pd.concat(tabelas, ignore_index=True).fillna(0) if tabelas else pd.DataFrame()
 
 
+def medidos(df: pd.DataFrame) -> pd.DataFrame:
+    """Só degraus que chegaram ao fim: um degrau interrompido (API caiu) não tem latência
+    nem contagens. Ele continua no resumo.md e na tabela de validade (C13)."""
+    if "incidente" not in df:
+        return df
+    return df[~df.incidente.astype(str).str.contains("falha_execucao")]
+
+
 def fig_latencia(df: pd.DataFrame, saida: Path) -> None:
     fig, ax = plt.subplots(figsize=(5, 3.2))
     for i, (cen, g) in enumerate(df.groupby("cenario", sort=False)):
@@ -100,14 +109,15 @@ def fig_latencia(df: pd.DataFrame, saida: Path) -> None:
         ax.plot(g.taxa_alvo, g.lat_p99_ms, marker="o", markersize=5, color=cor, label=cen)
         if "lat_p99_todas_ms" in g:  # C4: inclui timeouts
             ax.plot(g.taxa_alvo, g.lat_p99_todas_ms, linestyle=":", linewidth=1.2, color=cor)
-        if "gerador_valido" in g:  # C3: degraus em que o gerador não cumpriu a agenda
-            inv = g[~g.gerador_valido.astype(bool)]
+        coluna = "degrau_valido" if "degrau_valido" in g else "gerador_valido"
+        if coluna in g:  # C3/C13: gerador atrasou, fila não drenou ou API reiniciou
+            inv = g[~g[coluna].astype(bool)]
             ax.scatter(inv.taxa_alvo, inv.lat_p99_ms, s=70, facecolors=FUNDO, edgecolors=cor, zorder=4)
     ax.set_yscale("log")
     ax.set_xlabel("taxa de requisições (req/s)")
     ax.set_ylabel("latência p99 (ms, escala log)")
-    if "gerador_valido" in df:
-        ax.set_title("contínua: 2xx · pontilhada: todas · vazado: gerador inválido", fontsize=7, loc="left")
+    if "gerador_valido" in df or "degrau_valido" in df:
+        ax.set_title("contínua: 2xx · pontilhada: todas · vazado: degrau inválido", fontsize=7, loc="left")
     ax.legend()
     fig.tight_layout()
     fig.savefig(saida / "latencia_p99.png", dpi=200)
@@ -193,6 +203,7 @@ def fig_falha(raiz: Path, saida: Path) -> None:
 
 def tabela_markdown(df: pd.DataFrame, saida: Path) -> None:
     desejadas = ["cenario", "taxa_alvo", "taxa_obtida", "atraso_gerador_p99_ms", "gerador_valido",
+                 "drenou", "api_sem_reinicio", "degrau_valido", "incidente",
                  "lat_p50_ms", "lat_p99_ms", "lat_p99_todas_ms", "disponibilidade", "integridade",
                  "erros_de_carga", "erros_de_integridade", "retries", "ok_carga", "ok_integridade", "sem_erros"]
     cols = [c for c in desejadas if c in df]  # resultados antigos não têm as colunas novas
@@ -210,12 +221,14 @@ def gerar_figuras(resultados: Path, saida: Path) -> None:
     """Figuras de UMA pasta de resultados (resultados/<cenario>/...)."""
     saida.mkdir(parents=True, exist_ok=True)
     df = carregar(resultados)
-    rampa = df[~df.cenario.str.startswith("falha")] if not df.empty else df
+    ok = medidos(df) if not df.empty else df
+    rampa = ok[~ok.cenario.str.startswith("falha")] if not ok.empty else ok
     if not rampa.empty:
         fig_latencia(rampa, saida)
         fig_correcao(rampa, saida)
+    if not ok.empty:
+        fig_mapa_erros(ok, saida)
     if not df.empty:
-        fig_mapa_erros(df, saida)
         tabela_markdown(df, saida)
     fig_falha(resultados, saida)
     print(f"figuras em {saida}/: " + ", ".join(sorted(f.name for f in saida.iterdir() if f.is_file())))

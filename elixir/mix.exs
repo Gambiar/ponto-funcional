@@ -7,12 +7,14 @@ defmodule Ponto.MixProject do
       version: "0.1.0",
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      # testes sem iniciar a aplicação: não precisam de banco nem da porta 8000
+      aliases: [test: "test --no-start"]
     ]
   end
 
   def application do
-    [extra_applications: [:logger], mod: {Ponto.Application, []}]
+    [extra_applications: [:logger, :crypto], mod: {Ponto.Application, []}]
   end
 
   defp deps do

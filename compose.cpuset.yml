@@ -1,0 +1,16 @@
+# Núcleos dedicados por serviço (C14), perfil de 8 ou mais núcleos. O Makefile escolhe este
+# arquivo sozinho quando nproc >= 8 (em máquinas de 4 núcleos, usa compose.4cpu.yml).
+# Sem isto, `cpus:` limita só a quota: gerador, API e banco ainda disputam os mesmos
+# núcleos físicos e o mesmo cache, e o ruído entre eles entra na medição.
+# Núcleo 7 (e acima) fica livre para o sistema e o Docker.
+services:
+  db:
+    cpuset: "0-1"
+  api:
+    cpuset: "2"
+  carga:
+    cpuset: "3-6"
+    environment:
+      PERFIL_CPU: "8"
+  eco:
+    cpuset: "3-6"
