@@ -1,0 +1,20 @@
+{
+  "nome": "falha_baseline_sem_retry",
+  "modo": "baseline",
+  "lote": 200,
+  "espera_ms": 100,
+  "tentativas": 1,
+  "taxas": [
+    500
+  ],
+  "duracao": 30,
+  "anomalias": 0.05,
+  "seed": 4042,
+  "timeout": 5.0,
+  "falha_em": 5,
+  "falha_seg": 10.0,
+  "parar_apos": 2,
+  "tolerancia": 0.0001,
+  "atraso_max_ms": 20.0,
+  "extra": {}
+}

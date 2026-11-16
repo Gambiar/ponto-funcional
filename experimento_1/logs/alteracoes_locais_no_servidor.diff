@@ -1,0 +1,29 @@
+diff --git a/Makefile b/Makefile
+index 46df1a3..73f05c9 100644
+--- a/Makefile
++++ b/Makefile
+@@ -54,7 +54,9 @@ DURACAO    ?= 60
+ # banco novo a cada implementação: autovacuum, checkpoints e cache não passam de uma para outra (C13)
+ BANCO_NOVO = $(COMPOSE) rm -sfv db && docker volume rm -f ponto_pgdata
+ 
+-.PHONY: comparacao comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao         construir rodar-uma comparar-intercalado contrato contrato-funcional contrato-imperativo contrato-elixir
++.PHONY: comparacao comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao         construir rodar-uma comparar-intercalado contrato
++# contrato-funcional/imperativo/elixir ficam fora do .PHONY: o make não aplica a regra de
++# padrão contrato-% a alvos .PHONY, e o `make contrato` passaria sem testar nada
+ 
+ IMPLS = python_funcional python_imperativo elixir
+ compose_python_funcional  = $(COMPOSE)
+diff --git a/docker-compose.yml b/docker-compose.yml
+index ab3b36e..5a62c97 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -35,7 +35,8 @@ services:
+       CONSUMIDORES: 1
+       POOL_MAX: 20
+     ports:
+-      - "8000:8000"
++      # porta no host; ex.: API_PORTA=127.0.0.1:8010 quando a 8000 já está ocupada
++      - "${API_PORTA:-8000}:8000"
+     healthcheck:
+       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/saude')"]
+       interval: 2s

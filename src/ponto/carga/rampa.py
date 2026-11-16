@@ -15,6 +15,7 @@ viriam do mesmo relógio de ponto, e a ordem entre eles é preservada (C12).
 from __future__ import annotations
 
 import asyncio
+import gc
 import multiprocessing
 import time
 from collections.abc import Awaitable, Callable, Sequence
@@ -88,9 +89,31 @@ async def _cumprir_agenda(
     return [x for x in resultados if isinstance(x, Envio)]
 
 
-def _trabalhador(agenda: Agenda, url: str, timeout: float, t0: float) -> list[Envio]:
-    """Executado em outro processo: um laço de eventos próprio para a sua parte."""
-    return asyncio.run(_cumprir_agenda(agenda, url, timeout, t0))
+# Sincronização da largada (C16), recebida pelo initializer do pool: objetos de
+# multiprocessing não podem ir como argumento de submit().
+_PRONTOS = None   # Barrier(processos + 1): cada trabalhador já tem a sua agenda
+_LARGADA = None   # Event: o processo principal já fixou o instante zero
+_T0 = None        # Value('d'): o instante zero comum
+
+
+def _iniciar_trabalhador(prontos, largada, t0) -> None:
+    global _PRONTOS, _LARGADA, _T0
+    _PRONTOS, _LARGADA, _T0 = prontos, largada, t0
+
+
+def _trabalhador(agenda: Agenda, url: str, timeout: float) -> list[Envio]:
+    """Executado em outro processo: um laço de eventos próprio para a sua parte.
+
+    O instante zero só é fixado depois que todos os trabalhadores desserializaram a sua
+    agenda. Antes ele era fixado 0,5 s à frente antes do envio, e a 1500 req/s ou mais
+    a agenda (60 a 120 mil registros) demorava mais que isso para chegar: o começo de
+    cada degrau saía num surto atrasado (até 0,8 s), que sozinho estourava o p99 de 20 ms
+    e invalidava degraus em que o gerador cumpria a agenda no restante do tempo (C16).
+    """
+    gc.freeze()  # a agenda vive o degrau inteiro: tira-a das coletas de lixo periódicas
+    _PRONTOS.wait(120)
+    _LARGADA.wait(120)
+    return asyncio.run(_cumprir_agenda(agenda, url, timeout, _T0.value))
 
 
 def _aquecer() -> int:
@@ -123,10 +146,17 @@ async def disparar(
     partes = repartir(agenda, processos)
     laco = asyncio.get_running_loop()
     contexto = multiprocessing.get_context("spawn")  # processo limpo, sem herdar o laço de eventos
-    with ProcessPoolExecutor(max_workers=processos, mp_context=contexto) as pool:
+    prontos, largada, t0_comum = contexto.Barrier(processos + 1), contexto.Event(), contexto.Value("d", 0.0)
+    with ProcessPoolExecutor(max_workers=processos, mp_context=contexto,
+                             initializer=_iniciar_trabalhador, initargs=(prontos, largada, t0_comum)) as pool:
         await asyncio.gather(*[laco.run_in_executor(pool, _aquecer) for _ in range(processos)])
-        t0 = time.monotonic() + 0.5  # todos começam juntos, já aquecidos
-        tarefas = [laco.run_in_executor(pool, _trabalhador, parte, url, timeout, t0) for parte in partes]
+        tarefas = [laco.run_in_executor(pool, _trabalhador, parte, url, timeout) for parte in partes]
+        # espera todos receberem a agenda (numa thread, para não travar o laço de eventos)
+        # (com prazo: um trabalhador que morre quebra a barreira em vez de travar a suíte)
+        await laco.run_in_executor(None, prontos.wait, 120)
+        t0 = time.monotonic() + 0.1  # todos começam juntos, já aquecidos e com a agenda
+        t0_comum.value = t0
+        largada.set()
         if eventos:
             tarefas.append(_executar_eventos(eventos, t0))
         resultados = await asyncio.gather(*tarefas)

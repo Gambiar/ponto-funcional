@@ -1,0 +1,220 @@
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+No stopped containers
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml up -d --build --wait db api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 346B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 132B done
+#3 DONE 0.0s
+
+#4 [api 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 1.80kB done
+#5 DONE 0.0s
+
+#6 [api 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [api 5/6] RUN pip install ".[teste]"
+#7 CACHED
+
+#8 [api 4/6] COPY src ./src
+#8 CACHED
+
+#9 [api 3/6] COPY pyproject.toml ./
+#9 CACHED
+
+#10 [api 6/6] COPY tests ./tests
+#10 CACHED
+
+#11 [api] exporting to image
+#11 exporting layers done
+#11 writing image sha256:ed95313799a6fde02ca4a2e08376f9ec96cc50240e1140cc0fcef9bf7f2f8a51 done
+#11 naming to docker.io/library/ponto-funcional-api done
+#11 DONE 0.0s
+ Network ponto-funcional_default  Creating
+ Network ponto-funcional_default  Created
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Creating
+ Container ponto-funcional-api-1  Created
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps -e GERADOR_PROCESSOS=1 carga ponto.carga.contrato
+contrato da API em http://api:8000
+  [OK ] baseline: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote com falha e retry: 122 registros, acerto_gabarito=1.0, retries=4, sem erros
+contrato OK
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml up -d --build --wait db api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 346B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 132B done
+#3 DONE 0.0s
+
+#4 [api 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 1.80kB done
+#5 DONE 0.0s
+
+#6 [api 5/6] RUN pip install ".[teste]"
+#6 CACHED
+
+#7 [api 4/6] COPY src ./src
+#7 CACHED
+
+#8 [api 2/6] WORKDIR /app
+#8 CACHED
+
+#9 [api 3/6] COPY pyproject.toml ./
+#9 CACHED
+
+#10 [api 6/6] COPY tests ./tests
+#10 CACHED
+
+#11 [api] exporting to image
+#11 exporting layers done
+#11 writing image sha256:ed95313799a6fde02ca4a2e08376f9ec96cc50240e1140cc0fcef9bf7f2f8a51 0.0s done
+#11 naming to docker.io/library/ponto-funcional-api done
+#11 DONE 0.0s
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps -e GERADOR_PROCESSOS=1 carga ponto.carga.contrato
+contrato da API em http://api:8000
+  [OK ] baseline: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote com falha e retry: 122 registros, acerto_gabarito=1.0, retries=4, sem erros
+contrato OK
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml up -d --build --wait db api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 646B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/elixir:1.20.3-otp-29-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 52B done
+#3 DONE 0.0s
+
+#4 [api  1/10] FROM docker.io/library/elixir:1.20.3-otp-29-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 583B done
+#5 DONE 0.0s
+
+#6 [api  5/10] COPY mix.exs mix.lock ./
+#6 CACHED
+
+#7 [api  7/10] RUN mix deps.get --only prod && mix deps.compile
+#7 CACHED
+
+#8 [api  9/10] COPY test ./test
+#8 CACHED
+
+#9 [api  6/10] COPY config ./config
+#9 CACHED
+
+#10 [api  2/10] RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates     && rm -rf /var/lib/apt/lists/*
+#10 CACHED
+
+#11 [api  3/10] WORKDIR /app
+#11 CACHED
+
+#12 [api  8/10] COPY lib ./lib
+#12 CACHED
+
+#13 [api  4/10] RUN mix local.hex --force && mix local.rebar --force
+#13 CACHED
+
+#14 [api 10/10] RUN mix compile
+#14 CACHED
+
+#15 [api] exporting to image
+#15 exporting layers done
+#15 writing image sha256:31cf56da76ad559de2ec119e8098b104876d04aff1bad9a730fc7ef705b42122 done
+#15 naming to docker.io/library/ponto-api-elixir done
+#15 DONE 0.0s
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps -e GERADOR_PROCESSOS=1 carga ponto.carga.contrato
+contrato da API em http://api:8000
+  [OK ] baseline: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote com falha e retry: 122 registros, acerto_gabarito=1.0, retries=4, sem erros
+contrato OK

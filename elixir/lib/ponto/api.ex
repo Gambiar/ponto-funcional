@@ -81,16 +81,22 @@ defmodule Ponto.Api do
 
   # ------------------------------------------------------------------ modos
 
+  # `pendentes` é incrementado pela própria fila, só quando o item entra (C16). Antes ele subia
+  # aqui e descia na recusa: se o GenServer.call estourasse o prazo e a fila depois recusasse,
+  # o contador nunca descia, a API nunca ficava ociosa e os degraus seguintes eram invalidados.
   defp processar(conn, resultado, "lote") do
-    Estado.incr(:pendentes)
+    case Fila.enfileirar(resultado) do
+      true ->
+        Estado.incr(:enfileirados)
+        responder(conn, 202, %{id_evento: Nucleo.registro(resultado).id_evento, situacao: "enfileirado"})
 
-    if Fila.enfileirar(resultado) do
-      Estado.incr(:enfileirados)
-      responder(conn, 202, %{id_evento: Nucleo.registro(resultado).id_evento, situacao: "enfileirado"})
-    else
-      Estado.decr(:pendentes)
-      Estado.incr(:recusados)
-      responder(conn, 503, %{erro: "fila_cheia"})
+      false ->
+        Estado.incr(:recusados)
+        responder(conn, 503, %{erro: "fila_cheia"})
+
+      :sem_resposta ->
+        # o item pode ter entrado: a reconciliação o classifica pelo que estiver no banco
+        responder(conn, 503, %{erro: "fila_sem_resposta"})
     end
   end
 

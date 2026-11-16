@@ -6,6 +6,8 @@ Uso:
 from __future__ import annotations
 
 import argparse
+import json
+import shutil
 from pathlib import Path
 
 import matplotlib
@@ -28,19 +30,121 @@ def _rep(csv: Path) -> str:
 def carregar(raiz: Path) -> pd.DataFrame:
     """Aceita resultados/<impl>/<cenario>/ e resultados/<impl>/rep_<k>/<cenario>/."""
     tabelas = [
-        pd.read_csv(csv).assign(impl=impl, rep=_rep(csv))
+        pd.read_csv(csv).assign(impl=impl, rep=_rep(csv), pasta=str(csv.parent))
         for impl in IMPLEMENTACOES
         for csv in sorted((raiz / impl).glob("**/resumo.csv"))
     ]
     return pd.concat(tabelas, ignore_index=True) if tabelas else pd.DataFrame()
 
 
+# ------------------------------------------------------------ reanálise da largada (C16)
+
+COLUNA_LARGADA = "atraso_p99_apos_largada_ms"
+
+
+def atraso_apos_largada(envios: Path, largada_s: float) -> float | None:
+    """Atraso p99 do gerador (ms) só com os registros agendados depois de `largada_s`.
+    None se o arquivo não existe ou está vazio (degrau interrompido)."""
+    if not envios.exists() or envios.stat().st_size == 0:
+        return None
+    e = pd.read_csv(envios, usecols=["t_agendado", "t_envio"])
+    e = e[e.t_agendado >= largada_s]
+    return round(float((e.t_envio - e.t_agendado).quantile(0.99)) * 1000, 1) if len(e) else None
+
+
+def _atraso_max(pasta: Path) -> float:
+    try:
+        return float(json.loads((pasta / "config.json").read_text(encoding="utf-8")).get("atraso_max_ms", 20.0))
+    except (OSError, ValueError):
+        return 20.0
+
+
+def revalidar(df: pd.DataFrame, largada_s: float) -> pd.DataFrame:
+    """Refaz `degrau_valido` medindo o atraso do gerador depois dos `largada_s` iniciais.
+
+    Antes de C16 o gerador em vários processos saía num surto atrasado no começo do degrau
+    (a agenda chegava aos processos depois do instante zero), e só isso estourava o p99.
+    A coluna `atraso_p99_apos_largada_ms` é lida do resumo quando já existe (resultados
+    arquivados sem os envios) e calculada dos envios_<taxa>.csv quando não existe. Os
+    demais motivos de invalidade (API reiniciou, fila não drenou, falha de execução) ficam.
+    Os valores originais ficam em `degrau_valido_original` e `incidente_original`.
+    """
+    if df.empty or "degrau_valido" not in df:
+        return df
+    d = df.copy()
+    if COLUNA_LARGADA not in d:
+        d[COLUNA_LARGADA] = float("nan")
+    faltam = d[COLUNA_LARGADA].isna() & ~d.incidente.fillna("").astype(str).str.contains("falha_execucao")
+    d.loc[faltam, COLUNA_LARGADA] = [
+        atraso_apos_largada(Path(r.pasta) / f"envios_{int(r.taxa_alvo)}.csv", largada_s)
+        for r in d[faltam].itertuples()
+    ]
+    limite_ms = d.pasta.map(lambda p: _atraso_max(Path(p)))
+    gerador_ok = d[COLUNA_LARGADA].astype(float) <= limite_ms  # NaN (sem envios) -> inválido
+    incidente = d.incidente.fillna("").astype(str).replace("0", "")
+    falha = incidente.str.contains("falha_execucao")
+    for coluna in ("degrau_valido", "gerador_valido", "incidente"):
+        d[f"{coluna}_original"] = incidente if coluna == "incidente" else d[coluna]
+    d["gerador_valido"] = gerador_ok
+    sim = pd.Series(True, index=d.index)  # colunas que só existem depois de C13
+    d["degrau_valido"] = (gerador_ok & d.get("drenou", sim).astype(bool)
+                          & d.get("api_sem_reinicio", sim).astype(bool) & ~falha)
+
+    def motivos(inc: str, ok: bool, interrompido: bool) -> str:
+        outros = [m for m in inc.split("; ") if m and m != "gerador_atrasou"]
+        return "; ".join(outros + ([] if ok or interrompido else ["gerador_atrasou"]))
+
+    d["incidente"] = [motivos(i, ok, f) for i, ok, f in zip(incidente, gerador_ok, falha)]
+    return d
+
+
+def tabela_revalidacao(d: pd.DataFrame, largada_s: float) -> str:
+    """Quantos degraus mudaram de situação com a reanálise, por implementação."""
+    linhas = [f"Atraso p99 do gerador medido só depois dos {largada_s:g} s iniciais de cada degrau (C16).",
+              "", "| implementação | degraus | válidos (original) | válidos (reanálise) | revalidados |",
+              "|---|---|---|---|---|"]
+    for impl in IMPLEMENTACOES:
+        g = d[d.impl == impl]
+        if g.empty:
+            continue
+        antes, depois = g.degrau_valido_original.astype(bool), g.degrau_valido.astype(bool)
+        linhas.append(f"| {impl} | {len(g)} | {int(antes.sum())} | {int(depois.sum())} | {int((depois & ~antes).sum())} |")
+    return "\n".join(linhas) + "\n"
+
+
+def exportar(d: pd.DataFrame, destino: Path) -> None:
+    """Grava resumo.csv (com a coluna da reanálise, se houver) e config.json de cada cenário
+    em destino/<impl>/<rep>/<cenario>/: arquivo compacto, sem os envios e erros por registro,
+    que o `comparar` lê de novo com a mesma reanálise."""
+    restauradas = ("degrau_valido", "gerador_valido", "incidente")
+    internas = {"impl", "rep", "pasta"} | {f"{c}_original" for c in restauradas}
+    for (impl, rep, pasta), g in d.groupby(["impl", "rep", "pasta"]):
+        alvo = destino / impl / rep / Path(pasta).name
+        alvo.mkdir(parents=True, exist_ok=True)
+        g = g.copy()
+        for c in restauradas:  # o arquivo guarda o que foi medido; a reanálise é refeita ao ler
+            if f"{c}_original" in g:
+                g[c] = g[f"{c}_original"]
+        g[[c for c in g.columns if c not in internas]].to_csv(alvo / "resumo.csv", index=False)
+        if (Path(pasta) / "config.json").exists():
+            shutil.copy(Path(pasta) / "config.json", alvo / "config.json")
+
+
 def celula(g: pd.DataFrame, criterio: str) -> str:
     """Mediana entre repetições, com mínimo e máximo quando há mais de uma (C9)."""
     if g.empty:
         return "-"
-    # repetição sem nenhum degrau aprovado conta como 0, para não inflar a mediana
-    lims = pd.Series([limite(r, criterio) or 0 for _, r in g.groupby("rep")], dtype="float")
+    # repetição cujo primeiro degrau foi reprovado conta como 0, para não inflar a mediana (B5);
+    # mas se o primeiro degrau é INVÁLIDO (ex.: abortado por falha de execução), o limite é
+    # desconhecido e a repetição fica de fora: contá-la como 0 punia a implementação por um
+    # erro do ambiente (C16)
+    def mediu(r: pd.DataFrame) -> bool:
+        return "degrau_valido" not in r or bool(r.sort_values("taxa_alvo").degrau_valido.astype(bool).iloc[0])
+
+    medidas = [r for _, r in g.groupby("rep") if mediu(r)]
+    if not medidas:
+        return "sem degrau válido"
+    lims = pd.Series([limite(r, criterio) or 0 for r in medidas], dtype="float")
     if (lims == 0).all():
         return "nenhum"
     if len(lims) == 1:
@@ -161,17 +265,30 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--resultados", type=Path, default=Path("resultados"))
     p.add_argument("--saida", type=Path, default=Path("figuras/comparacao"))
+    p.add_argument("--descontar-largada", type=float, default=0.0, metavar="S",
+                   help="reanálise (C16): mede o atraso do gerador só depois dos S s iniciais de cada "
+                        "degrau. Para resultados anteriores a C16 use 2. Padrão: 0 (desligada)")
+    p.add_argument("--exportar", type=Path, default=None, metavar="DIR",
+                   help="grava em DIR só resumo.csv e config.json de cada cenário (com a coluna da "
+                        "reanálise, quando ligada), para arquivar uma execução sem os envios")
     a = p.parse_args()
     df = carregar(a.resultados)
     if df.empty:
         raise SystemExit(f"nenhum resumo.csv em {a.resultados}/<impl>/")
+    cabecalho = ""
+    if a.descontar_largada > 0:
+        df = revalidar(df, a.descontar_largada)
+        cabecalho = ("> **Reanálise (C16):** degraus revalidados com o atraso do gerador medido depois da "
+                     f"largada.\n\n{tabela_revalidacao(df, a.descontar_largada)}\n")
+    if a.exportar:
+        exportar(df, a.exportar)
     # resultados antigos (antes de C5) só têm sem_erros
     criterios = [c for c in CRITERIOS if c in df]
     a.saida.mkdir(parents=True, exist_ok=True)
     _estilo()
     figura_p99(df, a.saida)
     figura_validade(df, a.saida)
-    texto = "".join(f"## Limite (req/s), critério `{c}`\n\n{tabela(df, c)}\n\n" for c in criterios)
+    texto = cabecalho + "".join(f"## Limite (req/s), critério `{c}`\n\n{tabela(df, c)}\n\n" for c in criterios)
     texto += f"## Validade da execução (C13)\n\n{tabela_validade(df)}\n"
     (a.saida / "comparacao.md").write_text(texto, encoding="utf-8")
     print(texto)

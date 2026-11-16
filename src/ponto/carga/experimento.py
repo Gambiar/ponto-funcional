@@ -43,6 +43,7 @@ API = os.getenv("API_URL", "http://localhost:8000")
 PERFIL_CPU = os.getenv("PERFIL_CPU", "livre")  # perfil de núcleos do compose (C15)
 PROCESSOS = int(os.getenv("GERADOR_PROCESSOS", "1"))  # processos do gerador de carga (C12)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ponto:ponto@localhost:5432/ponto")
+ESPERA_REPETIR_S = 60  # > TIME_WAIT do Linux (60 s): as portas do degrau anterior voltam (C16)
 
 
 @dataclass(frozen=True)
@@ -277,15 +278,26 @@ async def rodar_cenario(c: Cenario, raiz: Path) -> list[dict]:
 
     resumos, falhas_seguidas = [], 0
     for taxa in c.taxas:
-        try:
-            r = await rodar_degrau(c, taxa, pasta)
-        except Exception as erro:  # API caiu, banco fora, resposta inesperada...
-            r = degrau_com_falha(c, taxa, erro)
-            if not await _esperar_api():
-                resumos.append(r)
-                _imprimir(r)
-                print("  API não voltou em 180 s: cenário interrompido")
+        api_ok = True
+        for tentativa in (1, 2):
+            try:
+                r = await rodar_degrau(c, taxa, pasta)
                 break
+            except Exception as erro:  # API caiu, banco fora, portas esgotadas...
+                r = degrau_com_falha(c, taxa, erro)
+                api_ok = await _esperar_api()
+                if not api_ok or tentativa == 2:
+                    break
+                # deixa as conexões do degrau anterior saírem de TIME_WAIT e repete uma vez:
+                # sem isso, um degrau saturado abortava os primeiros degraus do cenário
+                # seguinte e a repetição inteira contava como limite 0 (C16)
+                print(f"  [INV] {taxa:>5} req/s | {r['incidente']} (repetindo em {ESPERA_REPETIR_S} s)", flush=True)
+                await asyncio.sleep(ESPERA_REPETIR_S)
+        if not api_ok:
+            resumos.append(r)
+            _imprimir(r)
+            print("  API não voltou em 180 s: cenário interrompido")
+            break
         resumos.append(r)
         _imprimir(r)
         passou = r["ok_carga"] and r["ok_integridade"] and r["degrau_valido"]

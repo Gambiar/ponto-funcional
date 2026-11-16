@@ -14,7 +14,7 @@ defmodule Ponto.Application do
 
     filhos = [
       {Postgrex, [name: Ponto.DB, pool_size: String.to_integer(env("POOL_MAX", "20"))] ++ banco()},
-      {Ponto.Fila, String.to_integer(env("FILA_CAPACIDADE", "10000"))},
+      {Ponto.Fila, {String.to_integer(env("FILA_CAPACIDADE", "10000")), fn -> Ponto.Estado.incr(:pendentes) end}},
       Ponto.Consumidor
     ]
 

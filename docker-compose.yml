@@ -35,7 +35,8 @@ services:
       CONSUMIDORES: 1
       POOL_MAX: 20
     ports:
-      - "8000:8000"
+      # porta no host; ex.: API_PORTA=127.0.0.1:8010 quando a 8000 já está ocupada
+      - "${API_PORTA:-8000}:8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/saude')"]
       interval: 2s
@@ -61,6 +62,12 @@ services:
       - ./figuras:/app/figuras
       - ./dados:/app/dados
     cpus: ${CARGA_CPUS:-4}
+    # na saturação, cada timeout fecha a conexão e a próxima requisição abre outra: a 2000 req/s
+    # as ~28 mil portas efêmeras padrão ficam todas em TIME_WAIT e o degrau seguinte falha com
+    # "Cannot assign requested address" mesmo a 100 req/s (C16)
+    sysctls:
+      net.ipv4.ip_local_port_range: "1024 65535"
+      net.ipv4.tcp_tw_reuse: 1
     entrypoint: ["python", "-m"]
     command: ["ponto.carga.experimento", "--suite", "padrao"]
 

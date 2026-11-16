@@ -9,22 +9,44 @@ defmodule Ponto.Fila do
   """
   use GenServer
 
-  def start_link(capacidade), do: GenServer.start_link(__MODULE__, capacidade, name: __MODULE__)
+  @doc """
+  `ao_enfileirar` é chamada dentro do processo da fila, só quando o item entra de fato
+  (C16): quem conta os pendentes é quem decide, então a contagem não depende de a
+  resposta chegar ao chamador.
+  """
+  def start_link(capacidade, ao_enfileirar \\ fn -> :ok end),
+    do: GenServer.start_link(__MODULE__, {capacidade, ao_enfileirar}, name: __MODULE__)
 
-  def enfileirar(item), do: GenServer.call(__MODULE__, {:enfileirar, item})
+  def child_spec({capacidade, ao_enfileirar}),
+    do: %{id: __MODULE__, start: {__MODULE__, :start_link, [capacidade, ao_enfileirar]}}
+
+  def child_spec(capacidade), do: child_spec({capacidade, fn -> :ok end})
+
+  @doc """
+  `true` (entrou), `false` (fila cheia) ou `:sem_resposta` (a fila não respondeu no prazo;
+  o item pode ter entrado ou não, como um timeout do ponto de vista do cliente).
+  """
+  def enfileirar(item, prazo_ms \\ 5_000) do
+    GenServer.call(__MODULE__, {:enfileirar, item}, prazo_ms)
+  catch
+    :exit, {:timeout, _} -> :sem_resposta
+  end
+
   def coletar(max, espera_ms), do: GenServer.call(__MODULE__, {:coletar, max, espera_ms}, :infinity)
   def tamanho, do: GenServer.call(__MODULE__, :tamanho)
 
   @impl true
-  def init(capacidade) do
-    {:ok, %{q: :queue.new(), n: 0, cap: capacidade, esperando: nil, prazo: nil}}
+  def init({capacidade, ao_enfileirar}) do
+    {:ok, %{q: :queue.new(), n: 0, cap: capacidade, esperando: nil, prazo: nil, ao_enfileirar: ao_enfileirar}}
   end
 
   @impl true
   def handle_call({:enfileirar, _}, _from, %{n: n, cap: cap} = s) when n >= cap, do: {:reply, false, s}
 
-  def handle_call({:enfileirar, item}, _from, s),
-    do: {:reply, true, servir(%{s | q: :queue.in(item, s.q), n: s.n + 1})}
+  def handle_call({:enfileirar, item}, _from, s) do
+    s.ao_enfileirar.()
+    {:reply, true, servir(%{s | q: :queue.in(item, s.q), n: s.n + 1})}
+  end
 
   def handle_call({:coletar, max, espera}, from, s),
     do: {:noreply, servir(%{s | esperando: {from, max, espera}})}

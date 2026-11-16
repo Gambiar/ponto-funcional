@@ -1,0 +1,20 @@
+{
+  "nome": "falha_com_retry_20s",
+  "modo": "lote",
+  "lote": 200,
+  "espera_ms": 100,
+  "tentativas": 8,
+  "taxas": [
+    500
+  ],
+  "duracao": 45,
+  "anomalias": 0.05,
+  "seed": 5042,
+  "timeout": 5.0,
+  "falha_em": 5,
+  "falha_seg": 20.0,
+  "parar_apos": 2,
+  "tolerancia": 0.0001,
+  "atraso_max_ms": 20.0,
+  "extra": {}
+}

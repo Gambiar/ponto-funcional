@@ -105,13 +105,14 @@ Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU 
 
 **Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos, falha simulada em vez de queda real. Ver [Limitações](#limitações-ameaças-à-validade).
 
-O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C15, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
+O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C16, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
 
 ### Estado atual
 
-- Testes: 51 em Python (pytest) e 13 em Elixir (ExUnit), sem banco (`make testes`); gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
+- Testes: 55 em Python (pytest) e 15 em Elixir (ExUnit), sem banco (`make testes`); gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
 - Versão Elixir: compila sem avisos e passa no teste de contrato, como as duas versões Python (`make contrato`).
-- Execução final: planejada numa **VM Linux dedicada**; ver [`docs/vm.md`](docs/vm.md).
+- **Experimento 1** (nov/2026, servidor de 4 núcleos, 5 repetições): concluído e arquivado em [`experimento_1/`](experimento_1/README.md), com os resultados preliminares, os logs e os defeitos que ele revelou (C16), já corrigidos.
+- **Experimento 2**: a execução final, com C16; ver [`docs/vm.md`](docs/vm.md).
 - `exemplo/`: resultados de uma execução **anterior** às correções metodológicas; servem para mostrar a evolução do método, não como resultado final.
 
 ---
@@ -284,7 +285,7 @@ Para separar o efeito do **estilo funcional** do efeito do **runtime funcional**
 |---|---|---|
 | `python_imperativo` | `src/ponto_imperativo/api.py` | grupo de controle: sem núcleo puro, estado mutável, laços, if/elif, retry inline, bisseção iterativa |
 | `python_funcional` | `src/ponto/` | núcleo puro + casca imperativa (versão principal) |
-| `elixir` (em validação: ainda não executada) | `elixir/` | linguagem funcional: dados imutáveis, pattern matching nativo, fila como processo GenServer, Bandit + Postgrex |
+| `elixir` | `elixir/` | linguagem funcional: dados imutáveis, pattern matching nativo, fila como processo GenServer, Bandit + Postgrex |
 
 ```bash
 make comparacao          # calibra o gerador, roda a suíte nas três versões (5 repetições × 60 s)
@@ -335,6 +336,7 @@ elixir/                    versão Elixir (mix, Dockerfile próprio)
 compose.*.yml              trocam o serviço api pela versão imperativa ou Elixir
 docs/metodologia.md        hipóteses, métodos e registro de correções
 exemplo/                   resultados de uma execução anterior às correções metodológicas
+experimento_1/             1ª execução completa (resumos, logs, figuras, reanálise C16)
 tests/                     pytest + Hypothesis
 ```
 

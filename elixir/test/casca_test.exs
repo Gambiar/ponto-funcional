@@ -39,4 +39,16 @@ defmodule Ponto.CascaTest do
     assert Fila.coletar(2, 50) == [1, 2]
     assert Fila.coletar(10, 50) == [3]
   end
+
+  test "a fila só conta como pendente o que de fato entrou (C16)" do
+    {:ok, n} = Agent.start_link(fn -> 0 end)
+    start_supervised!({Fila, {2, fn -> Agent.update(n, &(&1 + 1)) end}})
+    assert Enum.map(1..5, &Fila.enfileirar/1) == [true, true, false, false, false]
+    assert Agent.get(n, & &1) == 2
+  end
+
+  test "enfileirar sem resposta no prazo não derruba o chamador" do
+    start_supervised!({Fila, {10, fn -> Process.sleep(200) end}})
+    assert Fila.enfileirar(:a, 10) == :sem_resposta
+  end
 end

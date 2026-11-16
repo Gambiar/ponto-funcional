@@ -54,7 +54,9 @@ DURACAO    ?= 60
 # banco novo a cada implementação: autovacuum, checkpoints e cache não passam de uma para outra (C13)
 BANCO_NOVO = $(COMPOSE) rm -sfv db && docker volume rm -f ponto_pgdata
 
-.PHONY: comparacao comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao         construir rodar-uma comparar-intercalado contrato contrato-funcional contrato-imperativo contrato-elixir
+.PHONY: comparacao comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao         construir rodar-uma comparar-intercalado contrato
+# contrato-funcional/imperativo/elixir ficam fora do .PHONY: o make não aplica a regra de
+# padrão contrato-% a alvos .PHONY, e o `make contrato` passaria sem testar nada
 
 IMPLS = python_funcional python_imperativo elixir
 compose_python_funcional  = $(COMPOSE)

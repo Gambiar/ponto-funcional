@@ -24,6 +24,7 @@ COMPONENTE = {
     "correto": "-",
     "recusado:fila_cheia": "fila (back-pressure)",
     "recusado:banco_indisponivel": "banco",
+    "recusado:fila_sem_resposta": "fila (sem resposta no prazo)",  # só a versão Elixir (C16)
     "timeout": "API (saturação)",
     "falha_conexao": "API (saturação)",
     "erro_servidor": "API",

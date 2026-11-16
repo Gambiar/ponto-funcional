@@ -1,0 +1,2489 @@
+mkdir -p resultados
+{ echo "data: $(date -Iseconds)"; \
+  echo "commit: $(git rev-parse --short HEAD 2>/dev/null)"; \
+  echo "perfil de CPU: 4 (núcleos da máquina: 4)"; \
+  docker compose -f docker-compose.yml -f compose.4cpu.yml config | grep -E "^  [a-z]+:$|cpus:|cpuset:|GERADOR_PROCESSOS"; \
+  echo; uname -a; echo; lscpu 2>/dev/null || sysctl -a 2>/dev/null | grep machdep.cpu; \
+  echo; free -h 2>/dev/null; echo; nproc 2>/dev/null; \
+  echo; docker version --format 'docker {{.Server.Version}}'; docker compose version; \
+} > resultados/ambiente.txt
+data: 2026-11-12T21:41:05-03:00
+commit: 1ee3691
+perfil de CPU: 4 (núcleos da máquina: 4)
+  api:
+    cpus: 1
+docker compose -f docker-compose.yml -f compose.4cpu.yml build api carga
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 346B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 132B done
+#3 DONE 0.0s
+
+#4 [api 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 1.80kB done
+#5 DONE 0.0s
+
+#6 [api 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [api 5/6] RUN pip install ".[teste]"
+#7 CACHED
+
+#8 [api 3/6] COPY pyproject.toml ./
+#8 CACHED
+
+#9 [api 4/6] COPY src ./src
+#9 CACHED
+
+#10 [api 6/6] COPY tests ./tests
+#10 CACHED
+
+#11 [api] exporting to image
+#11 exporting layers done
+#11 writing image sha256:ed95313799a6fde02ca4a2e08376f9ec96cc50240e1140cc0fcef9bf7f2f8a51 done
+#11 naming to docker.io/library/ponto-funcional-api done
+#11 DONE 0.0s
+
+#12 [carga internal] load build definition from Dockerfile
+#12 transferring dockerfile: 346B done
+#12 DONE 0.0s
+
+#2 [carga internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#13 [carga internal] load .dockerignore
+#13 transferring context: 132B done
+#13 DONE 0.0s
+
+#4 [carga 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#14 [carga internal] load build context
+#14 transferring context: 1.80kB done
+#14 DONE 0.0s
+
+#15 [carga 5/6] RUN pip install ".[teste]"
+#15 CACHED
+
+#6 [carga 2/6] WORKDIR /app
+#6 CACHED
+
+#16 [carga 3/6] COPY pyproject.toml ./
+#16 CACHED
+
+#17 [carga 4/6] COPY src ./src
+#17 CACHED
+
+#18 [carga 6/6] COPY tests ./tests
+#18 CACHED
+
+#19 [carga] exporting to image
+#19 exporting layers done
+#19 writing image sha256:e39ed5edbacc528ffccf28ec6e8cb4adcb73a8677c300743a196417417987fde done
+#19 naming to docker.io/library/ponto-funcional-carga done
+#19 DONE 0.0s
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml build api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 346B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 132B done
+#3 DONE 0.0s
+
+#4 [api 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 1.80kB done
+#5 DONE 0.0s
+
+#6 [api 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [api 5/6] RUN pip install ".[teste]"
+#7 CACHED
+
+#8 [api 3/6] COPY pyproject.toml ./
+#8 CACHED
+
+#9 [api 4/6] COPY src ./src
+#9 CACHED
+
+#10 [api 6/6] COPY tests ./tests
+#10 CACHED
+
+#11 [api] exporting to image
+#11 exporting layers done
+#11 writing image sha256:ed95313799a6fde02ca4a2e08376f9ec96cc50240e1140cc0fcef9bf7f2f8a51 done
+#11 naming to docker.io/library/ponto-funcional-api done
+#11 DONE 0.0s
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml build api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 646B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/elixir:1.20.3-otp-29-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 52B done
+#3 DONE 0.0s
+
+#4 [api  1/10] FROM docker.io/library/elixir:1.20.3-otp-29-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 583B done
+#5 DONE 0.0s
+
+#6 [api  4/10] RUN mix local.hex --force && mix local.rebar --force
+#6 CACHED
+
+#7 [api  6/10] COPY config ./config
+#7 CACHED
+
+#8 [api  9/10] COPY test ./test
+#8 CACHED
+
+#9 [api  5/10] COPY mix.exs mix.lock ./
+#9 CACHED
+
+#10 [api  7/10] RUN mix deps.get --only prod && mix deps.compile
+#10 CACHED
+
+#11 [api  8/10] COPY lib ./lib
+#11 CACHED
+
+#12 [api  3/10] WORKDIR /app
+#12 CACHED
+
+#13 [api  2/10] RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates     && rm -rf /var/lib/apt/lists/*
+#13 CACHED
+
+#14 [api 10/10] RUN mix compile
+#14 CACHED
+
+#15 [api] exporting to image
+#15 exporting layers done
+#15 writing image sha256:31cf56da76ad559de2ec119e8098b104876d04aff1bad9a730fc7ef705b42122 done
+#15 naming to docker.io/library/ponto-api-elixir done
+#15 DONE 0.0s
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml up -d --build --wait db api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 346B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 132B done
+#3 DONE 0.0s
+
+#4 [api 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 1.80kB done
+#5 DONE 0.0s
+
+#6 [api 3/6] COPY pyproject.toml ./
+#6 CACHED
+
+#7 [api 2/6] WORKDIR /app
+#7 CACHED
+
+#8 [api 4/6] COPY src ./src
+#8 CACHED
+
+#9 [api 5/6] RUN pip install ".[teste]"
+#9 CACHED
+
+#10 [api 6/6] COPY tests ./tests
+#10 CACHED
+
+#11 [api] exporting to image
+#11 exporting layers done
+#11 writing image sha256:ed95313799a6fde02ca4a2e08376f9ec96cc50240e1140cc0fcef9bf7f2f8a51 done
+#11 naming to docker.io/library/ponto-funcional-api done
+#11 DONE 0.0s
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps -e GERADOR_PROCESSOS=1 carga ponto.carga.contrato
+contrato da API em http://api:8000
+  [OK ] baseline: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote com falha e retry: 122 registros, acerto_gabarito=1.0, retries=4, sem erros
+contrato OK
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml up -d --build --wait db api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 346B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 132B done
+#3 DONE 0.0s
+
+#4 [api 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 1.80kB done
+#5 DONE 0.0s
+
+#6 [api 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [api 5/6] RUN pip install ".[teste]"
+#7 CACHED
+
+#8 [api 3/6] COPY pyproject.toml ./
+#8 CACHED
+
+#9 [api 4/6] COPY src ./src
+#9 CACHED
+
+#10 [api 6/6] COPY tests ./tests
+#10 CACHED
+
+#11 [api] exporting to image
+#11 exporting layers done
+#11 writing image sha256:ed95313799a6fde02ca4a2e08376f9ec96cc50240e1140cc0fcef9bf7f2f8a51 done
+#11 naming to docker.io/library/ponto-funcional-api done
+#11 DONE 0.0s
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps -e GERADOR_PROCESSOS=1 carga ponto.carga.contrato
+contrato da API em http://api:8000
+  [OK ] baseline: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote com falha e retry: 122 registros, acerto_gabarito=1.0, retries=4, sem erros
+contrato OK
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml up -d --build --wait db api
+#0 building with "default" instance using docker driver
+
+#1 [api internal] load build definition from Dockerfile
+#1 transferring dockerfile: 646B done
+#1 DONE 0.0s
+
+#2 [api internal] load metadata for docker.io/library/elixir:1.20.3-otp-29-slim
+#2 DONE 0.0s
+
+#3 [api internal] load .dockerignore
+#3 transferring context: 52B done
+#3 DONE 0.0s
+
+#4 [api  1/10] FROM docker.io/library/elixir:1.20.3-otp-29-slim
+#4 DONE 0.0s
+
+#5 [api internal] load build context
+#5 transferring context: 583B done
+#5 DONE 0.0s
+
+#6 [api  4/10] RUN mix local.hex --force && mix local.rebar --force
+#6 CACHED
+
+#7 [api  3/10] WORKDIR /app
+#7 CACHED
+
+#8 [api  7/10] RUN mix deps.get --only prod && mix deps.compile
+#8 CACHED
+
+#9 [api  5/10] COPY mix.exs mix.lock ./
+#9 CACHED
+
+#10 [api  2/10] RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates     && rm -rf /var/lib/apt/lists/*
+#10 CACHED
+
+#11 [api  6/10] COPY config ./config
+#11 CACHED
+
+#12 [api  8/10] COPY lib ./lib
+#12 CACHED
+
+#13 [api  9/10] COPY test ./test
+#13 CACHED
+
+#14 [api 10/10] RUN mix compile
+#14 CACHED
+
+#15 [api] exporting to image
+#15 exporting layers done
+#15 writing image sha256:31cf56da76ad559de2ec119e8098b104876d04aff1bad9a730fc7ef705b42122 done
+#15 naming to docker.io/library/ponto-api-elixir done
+#15 DONE 0.0s
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps -e GERADOR_PROCESSOS=1 carga ponto.carga.contrato
+contrato da API em http://api:8000
+  [OK ] baseline: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote: 105 registros, acerto_gabarito=1.0, retries=0, sem erros
+  [OK ] lote com falha e retry: 122 registros, acerto_gabarito=1.0, retries=4, sem erros
+contrato OK
+mkdir -p resultados
+docker compose -f docker-compose.yml -f compose.4cpu.yml --profile ferramentas up -d --build eco
+#0 building with "default" instance using docker driver
+
+#1 [eco internal] load build definition from Dockerfile
+#1 transferring dockerfile: 346B done
+#1 DONE 0.0s
+
+#2 [eco internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [eco internal] load .dockerignore
+#3 transferring context: 132B done
+#3 DONE 0.0s
+
+#4 [eco 1/6] FROM docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [eco internal] load build context
+#5 transferring context: 1.80kB done
+#5 DONE 0.0s
+
+#6 [eco 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [eco 3/6] COPY pyproject.toml ./
+#7 CACHED
+
+#8 [eco 4/6] COPY src ./src
+#8 CACHED
+
+#9 [eco 5/6] RUN pip install ".[teste]"
+#9 CACHED
+
+#10 [eco 6/6] COPY tests ./tests
+#10 CACHED
+
+#11 [eco] exporting to image
+#11 exporting layers done
+#11 writing image sha256:d1241a7299f64b03caffb38e66de045033acbb7bab58d48b9aa1554fd21c7117 done
+#11 naming to docker.io/library/ponto-funcional-eco done
+#11 DONE 0.0s
+ Container ponto-funcional-eco-1  Creating
+ Container ponto-funcional-eco-1  Created
+ Container ponto-funcional-eco-1  Starting
+ Container ponto-funcional-eco-1  Started
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps -e ECO_URL=http://eco:8001 carga ponto.carga.calibrar | tee resultados/calibracao.txt
+gerador com 2 processo(s)
+  taxa  enviado/s  atraso_p99_ms  lat_p99_ms  falhas
+   500      500.0            1.6         0.7       0
+  1000      999.7            1.1         0.9       0
+  2000     1998.4            1.2         1.2       0
+  3000     2996.4            1.7         2.0       0
+  4000     3993.6           55.2        91.9       0
+  6000     1039.4        70952.1     73972.0   70351
+  8000     1967.7        45822.7    102566.5  118879
+docker compose -f docker-compose.yml -f compose.4cpu.yml --profile ferramentas stop eco    # libera as CPUs antes do experimento
+ Container ponto-funcional-eco-1  Stopping
+ Container ponto-funcional-eco-1  Stopped
+######## repetição 1: python_funcional
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 1 		--duracao-suite 60 --saida resultados/python_funcional/rep_1
+
+######## resultados/python_funcional/rep_1
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      5.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      5.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.8) | p99      9.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1000 req/s (obtido   999.6) | p99    164.7 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  1500 req/s (obtido  1334.6) | p99   6001.4 ms | disp 0.6200 | integr 0.9576 | {'divergente:ordem_invertida': 155, 'divergente:saida_antes_da_entrada': 2186, 'falha_conexao': 5430, 'processado_sem_confirmacao': 27624, 'timeout': 816}
+  [INV]  2000 req/s | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address]
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address])
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.4) | p99      2.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99      9.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99     63.8 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2996.0) | p99   3485.6 ms | disp 1.0000 | integr 0.9997 | {'divergente:ordem_invertida': 54}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99     11.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1997.0) | p99    254.8 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 10}
+  [ERR]  3000 req/s (obtido  2995.7) | p99   1372.8 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 24}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.4) | p99      2.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.8) | p99     46.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99    275.1 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.3 ms | disp 1.0000 | integr 0.4968 | {'divergente:cascata_de_perda': 2480, 'perda_silenciosa': 5008}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.9401 | integr 0.9952 | {'divergente:cascata_de_perda': 50, 'perda_silenciosa': 51, 'recusado:fila_cheia': 1334}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 0.7655 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 52, 'recusado:fila_cheia': 6384}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3430.5 ms | disp 0.7718 | integr 0.9310 | {'divergente:ordem_invertida': 6, 'divergente:saida_antes_da_entrada': 786, 'processado_sem_confirmacao': 3396}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      9.7 ms | disp 0.6640 | integr 1.0000 | {'recusado:banco_indisponivel': 5000}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 1: python_imperativo
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 1 		--duracao-suite 60 --saida resultados/python_imperativo/rep_1
+
+######## resultados/python_imperativo/rep_1
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      4.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      4.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99     11.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1000 req/s (obtido   999.2) | p99    217.9 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 4}
+  [ERR]  1500 req/s (obtido  1494.0) | p99   5022.3 ms | disp 0.8200 | integr 0.9782 | {'divergente:ordem_invertida': 144, 'divergente:saida_antes_da_entrada': 1451, 'processado_sem_confirmacao': 16046}
+  [ERR]  2000 req/s (obtido  1514.5) | p99   9802.6 ms | disp 0.0868 | integr 0.9957 | {'divergente:ordem_invertida': 43, 'divergente:saida_antes_da_entrada': 1, 'falha_conexao': 46286, 'processado_sem_confirmacao': 10205, 'timeout': 51997}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [INV]   100 req/s | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address]
+  [INV]   250 req/s | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address]
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 100 req/s inválido (falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address])
+  atenção: degrau 250 req/s inválido (falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address])
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.5) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99     26.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.1) | p99    250.7 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 6}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99     14.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99    208.0 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 0.4974 | {'divergente:cascata_de_perda': 2472, 'perda_silenciosa': 5006}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.9402 | integr 0.9951 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1333}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.7655 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 52, 'recusado:fila_cheia': 6383}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3775.9 ms | disp 0.7726 | integr 0.9276 | {'divergente:ordem_invertida': 18, 'divergente:saida_antes_da_entrada': 814, 'processado_sem_confirmacao': 3383}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      4.2 ms | disp 0.6639 | integr 1.0000 | {'recusado:banco_indisponivel': 5001}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 1: elixir
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 1 		--duracao-suite 60 --saida resultados/elixir/rep_1
+
+######## resultados/elixir/rep_1
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      6.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      5.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      6.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99     96.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.9) | p99   3721.2 ms | disp 0.7904 | integr 0.9737 | {'divergente:ordem_invertida': 137, 'divergente:saida_antes_da_entrada': 1715, 'processado_sem_confirmacao': 11473, 'timeout': 7211}
+  [ERR]  2000 req/s (obtido  1183.2) | p99   6838.2 ms | disp 0.2011 | integr 0.9889 | {'divergente:ordem_invertida': 46, 'divergente:saida_antes_da_entrada': 219, 'falha_conexao': 33476, 'processado_sem_confirmacao': 11692, 'timeout': 49740}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.3) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99      6.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.2) | p99     90.6 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.7) | p99      6.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1997.7) | p99    107.4 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 6}
+  [ERR]  3000 req/s (obtido  2995.7) | p99   3498.5 ms | disp 0.8475 | integr 0.9999 | {'divergente:ordem_invertida': 14, 'processado_sem_confirmacao': 158, 'recusado:fila_cheia': 22371, 'timeout': 4654}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99      2.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.2) | p99     15.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.9) | p99   1165.7 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 14}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 1.0000 | integr 0.4978 | {'divergente:cascata_de_perda': 2480, 'perda_silenciosa': 4993}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 0.9396 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1346}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.7 ms | disp 0.7650 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 52, 'recusado:fila_cheia': 6397}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   5311.6 ms | disp 0.7694 | integr 0.9161 | {'divergente:ordem_invertida': 2, 'divergente:saida_antes_da_entrada': 958, 'processado_sem_confirmacao': 3432}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      3.8 ms | disp 0.6639 | integr 1.0000 | {'recusado:banco_indisponivel': 5001}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 2: python_imperativo
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 2 		--duracao-suite 60 --saida resultados/python_imperativo/rep_2
+
+######## resultados/python_imperativo/rep_2
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      4.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      6.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99     10.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99    128.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.5) | p99   1770.0 ms | disp 1.0000 | integr 0.9994 | {'divergente:ordem_invertida': 50}
+  [ERR]  2000 req/s (obtido  1079.2) | p99   6598.6 ms | disp 0.1658 | integr 0.9518 | {'divergente:ordem_invertida': 111, 'divergente:saida_antes_da_entrada': 839, 'falha_conexao': 37510, 'processado_sem_confirmacao': 24166, 'timeout': 37419}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [INV]   100 req/s | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address]
+  [INV]   250 req/s | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address]
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 100 req/s inválido (falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address])
+  atenção: degrau 250 req/s inválido (falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address])
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [INV]   100 req/s | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address]
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99      6.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99     52.0 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2995.7) | p99   1692.4 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 26}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 100 req/s inválido (falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address])
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.7) | p99     12.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.4) | p99     42.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2996.0) | p99   2020.3 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 20}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 1.0000 | integr 0.5069 | {'divergente:cascata_de_perda': 2324, 'perda_silenciosa': 5005}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 0.9401 | integr 0.9951 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1333}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.8) | p99      0.8 ms | disp 0.7654 | integr 0.9951 | {'divergente:cascata_de_perda': 50, 'perda_silenciosa': 52, 'recusado:fila_cheia': 6385}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3749.5 ms | disp 0.7771 | integr 0.9416 | {'divergente:ordem_invertida': 6, 'divergente:saida_antes_da_entrada': 669, 'processado_sem_confirmacao': 3313}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99     10.1 ms | disp 0.6636 | integr 1.0000 | {'recusado:banco_indisponivel': 5000}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 2: elixir
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 2 		--duracao-suite 60 --saida resultados/elixir/rep_2
+
+######## resultados/elixir/rep_2
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      8.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      6.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      6.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99     43.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.5) | p99   3683.6 ms | disp 0.8651 | integr 0.9869 | {'divergente:ordem_invertida': 134, 'divergente:saida_antes_da_entrada': 873, 'processado_sem_confirmacao': 8105, 'timeout': 3931}
+  [ERR]  2000 req/s (obtido  1808.6) | p99   3809.5 ms | disp 0.2190 | integr 0.9945 | {'divergente:ordem_invertida': 51, 'divergente:saida_antes_da_entrada': 92, 'falha_conexao': 35790, 'processado_sem_confirmacao': 7266, 'timeout': 49724}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99     10.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1997.1) | p99     11.4 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  1405.9) | p99   4574.5 ms | disp 0.0650 | integr 0.9990 | {'divergente:ordem_invertida': 12, 'falha_conexao': 57966, 'processado_sem_confirmacao': 2169, 'recusado:fila_cheia': 16267, 'timeout': 90189}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (fila_nao_drenou; gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 100 req/s inválido (fila_nao_drenou)
+  atenção: degrau 250 req/s inválido (fila_nao_drenou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 100 req/s inválido (fila_nao_drenou)
+  atenção: degrau 250 req/s inválido (fila_nao_drenou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 500 req/s inválido (fila_nao_drenou)
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.7 ms | disp 1.0000 | integr 0.5072 | {'divergente:cascata_de_perda': 2332, 'perda_silenciosa': 4992}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 500 req/s inválido (fila_nao_drenou)
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 0.9396 | integr 0.9951 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1344}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 500 req/s inválido (fila_nao_drenou)
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.7 ms | disp 0.7650 | integr 0.9949 | {'divergente:cascata_de_perda': 53, 'perda_silenciosa': 53, 'recusado:fila_cheia': 6396}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 500 req/s inválido (fila_nao_drenou)
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   4830.1 ms | disp 0.7774 | integr 0.9374 | {'divergente:ordem_invertida': 8, 'divergente:saida_antes_da_entrada': 715, 'processado_sem_confirmacao': 3309}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 500 req/s inválido (fila_nao_drenou)
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      6.6 ms | disp 0.6636 | integr 1.0000 | {'recusado:banco_indisponivel': 5000}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+  atenção: degrau 500 req/s inválido (fila_nao_drenou)
+######## repetição 2: python_funcional
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 2 		--duracao-suite 60 --saida resultados/python_funcional/rep_2
+
+######## resultados/python_funcional/rep_2
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      5.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      4.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99     14.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.5) | p99    202.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1191.3) | p99   5580.3 ms | disp 0.4389 | integr 0.9738 | {'divergente:ordem_invertida': 107, 'divergente:saida_antes_da_entrada': 920, 'falha_conexao': 12228, 'processado_sem_confirmacao': 25650, 'timeout': 12169}
+  [ERR]  2000 req/s (obtido  1608.6) | p99  15250.4 ms | disp 0.1313 | integr 0.9862 | {'divergente:ordem_invertida': 84, 'divergente:saida_antes_da_entrada': 131, 'falha_conexao': 44724, 'processado_sem_confirmacao': 14161, 'timeout': 44313}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.8) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.7) | p99     11.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.0) | p99     52.7 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2995.5) | p99   3252.7 ms | disp 0.9978 | integr 0.9998 | {'divergente:ordem_invertida': 36, 'processado_sem_confirmacao': 385}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      2.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99     15.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99    431.9 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 6}
+  [ERR]  3000 req/s (obtido  2983.9) | p99   2624.4 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 26}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.3) | p99      2.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99     93.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1997.2) | p99    358.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.2 ms | disp 1.0000 | integr 0.5069 | {'divergente:cascata_de_perda': 2325, 'perda_silenciosa': 5004}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.9401 | integr 0.9946 | {'divergente:cascata_de_perda': 56, 'perda_silenciosa': 57, 'recusado:fila_cheia': 1334}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 0.7655 | integr 0.9951 | {'divergente:cascata_de_perda': 50, 'perda_silenciosa': 52, 'recusado:fila_cheia': 6384}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3480.9 ms | disp 0.7713 | integr 0.9385 | {'divergente:ordem_invertida': 6, 'divergente:saida_antes_da_entrada': 699, 'processado_sem_confirmacao': 3399}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      8.3 ms | disp 0.6636 | integr 1.0000 | {'recusado:banco_indisponivel': 4999}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 3: elixir
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 3 		--duracao-suite 60 --saida resultados/elixir/rep_3
+
+######## resultados/elixir/rep_3
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      4.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      4.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      7.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.3) | p99     66.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.4) | p99   3710.0 ms | disp 0.8144 | integr 0.9781 | {'divergente:ordem_invertida': 144, 'divergente:saida_antes_da_entrada': 1448, 'processado_sem_confirmacao': 11221, 'timeout': 5319}
+  [ERR]  2000 req/s (obtido  1359.4) | p99   3782.4 ms | disp 0.2078 | integr 0.9947 | {'divergente:ordem_invertida': 50, 'divergente:saida_antes_da_entrada': 81, 'falha_conexao': 33382, 'processado_sem_confirmacao': 5260, 'timeout': 55503}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99      3.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.4) | p99     12.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.7) | p99    909.0 ms | disp 0.8817 | integr 0.9999 | {'divergente:ordem_invertida': 10, 'divergente:saida_antes_da_entrada': 3, 'processado_sem_confirmacao': 89, 'recusado:fila_cheia': 18960, 'timeout': 2031}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.8) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99     12.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.2) | p99     80.0 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.4) | p99      8.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.3) | p99     78.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      2.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 0.5028 | {'divergente:cascata_de_perda': 2389, 'perda_silenciosa': 4992}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.7 ms | disp 0.9397 | integr 0.9949 | {'divergente:cascata_de_perda': 53, 'perda_silenciosa': 53, 'recusado:fila_cheia': 1345}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 0.7653 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 53, 'recusado:fila_cheia': 6396}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   5453.0 ms | disp 0.7411 | integr 0.9276 | {'divergente:ordem_invertida': 2, 'divergente:saida_antes_da_entrada': 794, 'processado_sem_confirmacao': 3843}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99     13.5 ms | disp 0.6631 | integr 1.0000 | {'recusado:banco_indisponivel': 5001}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 3: python_funcional
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 3 		--duracao-suite 60 --saida resultados/python_funcional/rep_3
+
+######## resultados/python_funcional/rep_3
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      4.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      4.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99     10.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1000 req/s (obtido   999.2) | p99    198.9 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 4}
+  [ERR]  1500 req/s (obtido  1384.7) | p99   6568.9 ms | disp 0.6245 | integr 0.9626 | {'divergente:ordem_invertida': 126, 'divergente:saida_antes_da_entrada': 1958, 'falha_conexao': 4051, 'processado_sem_confirmacao': 28040, 'timeout': 1376}
+  [ERR]  2000 req/s (obtido  1628.4) | p99   5728.0 ms | disp 0.2180 | integr 0.9997 | {'divergente:ordem_invertida': 7, 'falha_conexao': 48419, 'processado_sem_confirmacao': 3959, 'timeout': 40550}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.3) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99      7.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99     70.2 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2995.7) | p99   2516.5 ms | disp 1.0000 | integr 0.9998 | {'divergente:ordem_invertida': 44}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99      8.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99    131.3 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2995.7) | p99   1324.2 ms | disp 1.0000 | integr 0.9998 | {'divergente:ordem_invertida': 38}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.7) | p99     44.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.2) | p99    130.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.5) | p99   1497.0 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 22}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 0.5021 | {'divergente:cascata_de_perda': 2387, 'perda_silenciosa': 5005}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.2 ms | disp 0.9402 | integr 0.9949 | {'divergente:cascata_de_perda': 53, 'perda_silenciosa': 53, 'recusado:fila_cheia': 1333}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.7657 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 53, 'recusado:fila_cheia': 6385}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   4062.4 ms | disp 0.7813 | integr 0.9448 | {'divergente:ordem_invertida': 16, 'divergente:saida_antes_da_entrada': 624, 'processado_sem_confirmacao': 3247}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      5.9 ms | disp 0.6631 | integr 1.0000 | {'recusado:banco_indisponivel': 5001}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 3: python_imperativo
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 3 		--duracao-suite 60 --saida resultados/python_imperativo/rep_3
+
+######## resultados/python_imperativo/rep_3
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      4.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      8.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      7.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99    113.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1492.6) | p99   5426.5 ms | disp 0.9072 | integr 0.9898 | {'divergente:ordem_invertida': 171, 'divergente:saida_antes_da_entrada': 653, 'processado_sem_confirmacao': 8275}
+  [ERR]  2000 req/s (obtido  1306.8) | p99   7420.0 ms | disp 0.1376 | integr 0.9850 | {'divergente:ordem_invertida': 96, 'divergente:saida_antes_da_entrada': 150, 'falha_conexao': 40907, 'processado_sem_confirmacao': 16080, 'timeout': 45494}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.4) | p99     18.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1997.5) | p99    223.5 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 6}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.5) | p99     13.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.1) | p99    215.6 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2995.3) | p99   1448.9 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 26}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.7) | p99     58.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.3) | p99    105.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.8) | p99      1.0 ms | disp 1.0000 | integr 0.5021 | {'divergente:cascata_de_perda': 2385, 'perda_silenciosa': 5007}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 0.9402 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1334}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 0.7657 | integr 0.9951 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 52, 'recusado:fila_cheia': 6386}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3870.6 ms | disp 0.7741 | integr 0.9368 | {'divergente:ordem_invertida': 6, 'divergente:saida_antes_da_entrada': 720, 'processado_sem_confirmacao': 3354}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      8.3 ms | disp 0.6631 | integr 1.0000 | {'recusado:banco_indisponivel': 5001}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 4: python_funcional
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 4 		--duracao-suite 60 --saida resultados/python_funcional/rep_4
+
+######## resultados/python_funcional/rep_4
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      8.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99     10.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99     13.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99    165.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1438.1) | p99   5507.5 ms | disp 0.6715 | integr 0.9667 | {'divergente:ordem_invertida': 144, 'divergente:saida_antes_da_entrada': 1851, 'falha_conexao': 1197, 'processado_sem_confirmacao': 27292, 'timeout': 802}
+  [INV]  2000 req/s | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address]
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address])
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99     12.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.1) | p99     73.3 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 4}
+  [ERR]  3000 req/s (obtido  2995.8) | p99   2955.1 ms | disp 1.0000 | integr 0.9998 | {'divergente:ordem_invertida': 34}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99     16.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1499.0) | p99     12.8 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  2000 req/s (obtido  1998.1) | p99    452.6 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 10}
+  [ERR]  3000 req/s (obtido  2995.8) | p99    849.8 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 16}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+  atenção: degrau 1000 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.5) | p99      1.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99      8.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.3) | p99    162.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.8) | p99   2834.1 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 22}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 0.5066 | {'divergente:cascata_de_perda': 2331, 'perda_silenciosa': 5009}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.9401 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 53, 'recusado:fila_cheia': 1335}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.7653 | integr 0.9949 | {'divergente:cascata_de_perda': 53, 'perda_silenciosa': 54, 'recusado:fila_cheia': 6388}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3916.2 ms | disp 0.7778 | integr 0.9415 | {'divergente:ordem_invertida': 13, 'divergente:saida_antes_da_entrada': 664, 'processado_sem_confirmacao': 3306}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      5.4 ms | disp 0.6639 | integr 1.0000 | {'recusado:banco_indisponivel': 5000}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 4: python_imperativo
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 4 		--duracao-suite 60 --saida resultados/python_imperativo/rep_4
+
+######## resultados/python_imperativo/rep_4
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      5.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      4.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]   500 req/s (obtido   499.9) | p99      8.3 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 2}
+  [OK ]  1000 req/s (obtido   999.3) | p99    166.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1368.4) | p99   8596.6 ms | disp 0.6539 | integr 0.9657 | {'divergente:ordem_invertida': 151, 'divergente:saida_antes_da_entrada': 1851, 'falha_conexao': 2742, 'processado_sem_confirmacao': 27363, 'timeout': 754}
+  [ERR]  2000 req/s (obtido  1589.0) | p99    580.7 ms | disp 0.4997 | integr 0.9996 | {'divergente:ordem_invertida': 22, 'falha_conexao': 20441, 'processado_sem_confirmacao': 972, 'timeout': 38025}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 250 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.3) | p99      1.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.3) | p99     65.4 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  2000 req/s (obtido  1998.0) | p99    253.6 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.8) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.5) | p99      1.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99      8.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1997.3) | p99     51.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.4) | p99   3241.6 ms | disp 1.0000 | integr 0.9998 | {'divergente:ordem_invertida': 44}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.9) | p99     17.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.0) | p99    220.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.8) | p99    741.1 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 4}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 1.0000 | integr 0.5063 | {'divergente:cascata_de_perda': 2333, 'perda_silenciosa': 5011}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 0.9402 | integr 0.9951 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1333}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 0.7655 | integr 0.9950 | {'divergente:cascata_de_perda': 52, 'perda_silenciosa': 53, 'recusado:fila_cheia': 6383}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3808.4 ms | disp 0.7715 | integr 0.9341 | {'divergente:ordem_invertida': 7, 'divergente:saida_antes_da_entrada': 749, 'processado_sem_confirmacao': 3399}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      7.8 ms | disp 0.6639 | integr 1.0000 | {'recusado:banco_indisponivel': 5000}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 4: elixir
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 4 		--duracao-suite 60 --saida resultados/elixir/rep_4
+
+######## resultados/elixir/rep_4
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      5.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      6.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      7.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99     49.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.6) | p99   3748.9 ms | disp 0.7888 | integr 0.9723 | {'divergente:ordem_invertida': 101, 'divergente:saida_antes_da_entrada': 1846, 'processado_sem_confirmacao': 11427, 'timeout': 7409}
+  [ERR]  2000 req/s (obtido  1101.0) | p99   5126.9 ms | disp 0.1806 | integr 0.9952 | {'divergente:ordem_invertida': 29, 'divergente:saida_antes_da_entrada': 74, 'falha_conexao': 27700, 'processado_sem_confirmacao': 8585, 'timeout': 61071}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99      3.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.0) | p99    223.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.6) | p99   1489.7 ms | disp 0.9912 | integr 0.9999 | {'divergente:ordem_invertida': 20, 'recusado:fila_cheia': 1569}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.1) | p99      7.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.3) | p99    111.6 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2995.6) | p99    615.8 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 12}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.9) | p99    106.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.2) | p99    118.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 0.5071 | {'divergente:cascata_de_perda': 2340, 'perda_silenciosa': 4992}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.8) | p99      0.8 ms | disp 0.9397 | integr 0.9951 | {'divergente:cascata_de_perda': 50, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1345}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.8) | p99      0.9 ms | disp 0.7650 | integr 0.9950 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 53, 'recusado:fila_cheia': 6396}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   5083.0 ms | disp 0.7343 | integr 0.8949 | {'divergente:ordem_invertida': 8, 'divergente:saida_antes_da_entrada': 1140, 'processado_sem_confirmacao': 3953}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99     11.9 ms | disp 0.6638 | integr 1.0000 | {'recusado:banco_indisponivel': 5001}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 5: python_imperativo
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.imperativo.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 5 		--duracao-suite 60 --saida resultados/python_imperativo/rep_5
+
+######## resultados/python_imperativo/rep_5
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      4.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      5.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99     11.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1000 req/s (obtido   999.4) | p99    179.1 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  1500 req/s (obtido  1351.3) | p99   8619.3 ms | disp 0.6547 | integr 0.9642 | {'divergente:ordem_invertida': 127, 'divergente:saida_antes_da_entrada': 1962, 'falha_conexao': 2669, 'processado_sem_confirmacao': 27194, 'timeout': 912}
+  [ERR]  2000 req/s (obtido  1226.1) | p99   3560.0 ms | disp 0.5275 | integr 0.9996 | {'divergente:ordem_invertida': 22, 'falha_conexao': 20396, 'processado_sem_confirmacao': 1073, 'timeout': 34728}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99      7.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.3) | p99     81.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.4) | p99   1682.4 ms | disp 1.0000 | integr 0.9998 | {'divergente:ordem_invertida': 42}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1499.0) | p99     20.4 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [OK ]  2000 req/s (obtido  1997.7) | p99    229.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  3000 req/s (obtido  2995.5) | p99   1207.9 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 16}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.8) | p99     13.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  2000 req/s (obtido  1998.2) | p99     65.7 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2995.8) | p99   1526.0 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 26}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1500 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 1.0000 | integr 0.5024 | {'divergente:cascata_de_perda': 2398, 'perda_silenciosa': 5010}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 0.9403 | integr 0.9951 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 52, 'recusado:fila_cheia': 1333}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.7659 | integr 0.9951 | {'divergente:cascata_de_perda': 50, 'perda_silenciosa': 53, 'recusado:fila_cheia': 6385}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3725.8 ms | disp 0.7737 | integr 0.9343 | {'divergente:ordem_invertida': 8, 'divergente:saida_antes_da_entrada': 749, 'processado_sem_confirmacao': 3369}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99     10.2 ms | disp 0.6641 | integr 1.0000 | {'recusado:banco_indisponivel': 5001}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 5: elixir
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 5 		--duracao-suite 60 --saida resultados/elixir/rep_5
+
+######## resultados/elixir/rep_5
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      8.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      4.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.8) | p99      6.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99     93.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.8) | p99   3781.9 ms | disp 0.7732 | integr 0.9743 | {'divergente:ordem_invertida': 131, 'divergente:saida_antes_da_entrada': 1641, 'processado_sem_confirmacao': 12099, 'timeout': 8119}
+  [ERR]  2000 req/s (obtido  1586.6) | p99   3949.9 ms | disp 0.1628 | integr 0.9965 | {'divergente:ordem_invertida': 34, 'divergente:saida_antes_da_entrada': 33, 'falha_conexao': 23286, 'processado_sem_confirmacao': 6288, 'timeout': 69990}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.8) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.4) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1499.0) | p99     64.0 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [OK ]  2000 req/s (obtido  1998.3) | p99    161.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1499.0) | p99      5.7 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  2000 req/s (obtido  1998.2) | p99    194.2 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  3000 req/s (obtido  2993.2) | p99   1771.4 ms | disp 0.9786 | integr 0.9997 | {'divergente:ordem_invertida': 44, 'recusado:fila_cheia': 3824}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1500 req/s
+  limite (ok_integridade): 1500 req/s
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+  atenção: degrau 3000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1499.0) | p99      8.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1997.9) | p99     99.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      0.9 ms | disp 1.0000 | integr 0.5027 | {'divergente:cascata_de_perda': 2410, 'perda_silenciosa': 4994}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.9397 | integr 0.9949 | {'divergente:cascata_de_perda': 53, 'perda_silenciosa': 53, 'recusado:fila_cheia': 1345}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.0 ms | disp 0.7655 | integr 0.9951 | {'divergente:cascata_de_perda': 50, 'perda_silenciosa': 53, 'recusado:fila_cheia': 6396}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   4548.6 ms | disp 0.7394 | integr 0.9182 | {'divergente:ordem_invertida': 7, 'divergente:saida_antes_da_entrada': 894, 'processado_sem_confirmacao': 3880}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      5.9 ms | disp 0.6642 | integr 1.0000 | {'recusado:banco_indisponivel': 5000}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+######## repetição 5: python_funcional
+docker compose -f docker-compose.yml -f compose.4cpu.yml rm -sfv db && docker volume rm -f ponto_pgdata
+ Container ponto-funcional-db-1  Stopping
+ Container ponto-funcional-db-1  Stopped
+Going to remove ponto-funcional-db-1
+ Container ponto-funcional-db-1  Removing
+ Container ponto-funcional-db-1  Removed
+ponto_pgdata
+docker compose -f docker-compose.yml -f compose.4cpu.yml up -d --wait db api
+ Volume "ponto_pgdata"  Creating
+ Volume "ponto_pgdata"  Created
+ Container ponto-funcional-db-1  Creating
+ Container ponto-funcional-db-1  Created
+ Container ponto-funcional-api-1  Recreate
+ Container ponto-funcional-api-1  Recreated
+ Container ponto-funcional-db-1  Starting
+ Container ponto-funcional-db-1  Started
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Starting
+ Container ponto-funcional-api-1  Started
+ Container ponto-funcional-api-1  Waiting
+ Container ponto-funcional-db-1  Waiting
+ Container ponto-funcional-db-1  Healthy
+ Container ponto-funcional-api-1  Healthy
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep 5 		--duracao-suite 60 --saida resultados/python_funcional/rep_5
+
+######## resultados/python_funcional/rep_5
+
+== baseline (baseline, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      5.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      5.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99     15.1 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1000 req/s (obtido   999.6) | p99    290.1 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 8}
+  [ERR]  1500 req/s (obtido  1169.6) | p99  10189.2 ms | disp 0.4838 | integr 0.9669 | {'divergente:ordem_invertida': 121, 'divergente:saida_antes_da_entrada': 1307, 'falha_conexao': 10835, 'processado_sem_confirmacao': 23075, 'timeout': 12100}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 500 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+
+== lote_50 (lote, lote=50, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.3 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.2) | p99      2.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1499.0) | p99    141.0 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 2}
+  [ERR]  2000 req/s (obtido  1998.3) | p99    437.4 ms | disp 1.0000 | integr 0.9999 | {'divergente:ordem_invertida': 14}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_200 (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.4 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.2) | p99      2.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [ERR]  1500 req/s (obtido  1498.1) | p99     70.2 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 4}
+  [ERR]  2000 req/s (obtido  1998.1) | p99    249.7 ms | disp 1.0000 | integr 1.0000 | {'divergente:ordem_invertida': 4}
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== lote_1000 (lote, lote=1000, espera=100 ms, tentativas=8)
+  [OK ]   100 req/s (obtido   100.0) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   250 req/s (obtido   250.0) | p99      1.5 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]   500 req/s (obtido   499.9) | p99      1.2 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1000 req/s (obtido   999.6) | p99      2.8 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  1500 req/s (obtido  1498.8) | p99     43.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  [OK ]  2000 req/s (obtido  1998.0) | p99    176.6 ms | disp 1.0000 | integr 1.0000 | sem erros
+  rampa interrompida: limite ultrapassado
+  limite (sem_erros): 1000 req/s
+  limite (ok_carga): 1000 req/s
+  limite (ok_integridade): 1000 req/s
+  atenção: degrau 1500 req/s inválido (gerador_atrasou)
+  atenção: degrau 2000 req/s inválido (gerador_atrasou)
+
+== falha_com_retry (lote, lote=200, espera=100 ms, tentativas=8)
+  [OK ]   500 req/s (obtido   499.9) | p99      1.7 ms | disp 1.0000 | integr 1.0000 | sem erros
+  limite (sem_erros): 500 req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): 500 req/s
+
+== falha_sem_retry (lote, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.4 ms | disp 1.0000 | integr 0.5015 | {'divergente:cascata_de_perda': 2410, 'perda_silenciosa': 5012}
+  limite (sem_erros): None req/s
+  limite (ok_carga): 500 req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_20s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.4 ms | disp 0.9402 | integr 0.9951 | {'divergente:cascata_de_perda': 51, 'perda_silenciosa': 51, 'recusado:fila_cheia': 1335}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_com_retry_30s (lote, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99      1.3 ms | disp 0.7657 | integr 0.9952 | {'divergente:cascata_de_perda': 49, 'perda_silenciosa': 52, 'recusado:fila_cheia': 6390}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_com_retry (baseline, lote=200, espera=100 ms, tentativas=8)
+  [ERR]   500 req/s (obtido   499.9) | p99   3912.4 ms | disp 0.7719 | integr 0.9334 | {'divergente:ordem_invertida': 14, 'divergente:saida_antes_da_entrada': 751, 'processado_sem_confirmacao': 3396}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): None req/s
+
+== falha_baseline_sem_retry (baseline, lote=200, espera=100 ms, tentativas=1)
+  [ERR]   500 req/s (obtido   499.9) | p99      8.3 ms | disp 0.6642 | integr 1.0000 | {'recusado:banco_indisponivel': 5000}
+  limite (sem_erros): None req/s
+  limite (ok_carga): None req/s
+  limite (ok_integridade): 500 req/s
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.analise.graficos --tudo --resultados resultados --saida figuras
+figuras em figuras/elixir/rep_1/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+/usr/local/lib/python3.12/site-packages/ponto/analise/graficos.py:94: Pandas4Warning: 'int' is not supported as a fill value for str dtype. In a future version, calling fillna with an incompatible value will raise. Explicitly cast to a common dtype before filling.
+  return pd.concat(tabelas, ignore_index=True).fillna(0) if tabelas else pd.DataFrame()
+figuras em figuras/elixir/rep_2/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/elixir/rep_3/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/elixir/rep_4/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/elixir/rep_5/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_funcional/rep_1/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_funcional/rep_2/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_funcional/rep_3/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_funcional/rep_4/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_funcional/rep_5/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_imperativo/rep_1/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_imperativo/rep_2/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_imperativo/rep_3/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_imperativo/rep_4/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+figuras em figuras/python_imperativo/rep_5/: correcao.png, falha_linha_do_tempo.png, latencia_p99.png, mapa_de_erros.png, resumo.md
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps carga ponto.analise.comparar --resultados resultados --saida figuras/comparacao
+## Limite (req/s), critério `ok_carga`
+
+| cenário | python_imperativo | python_funcional | elixir |
+|---|---|---|---|
+| baseline | 1000 [1000–1000] (n=5) | 1000 [1000–1000] (n=5) | 1000 [1000–1000] (n=5) |
+| falha_baseline_com_retry | nenhum | nenhum | nenhum |
+| falha_baseline_sem_retry | nenhum | nenhum | nenhum |
+| falha_com_retry | 500 [500–500] (n=5) | 500 [500–500] (n=5) | 500 [0–500] (n=5) |
+| falha_com_retry_20s | nenhum | nenhum | nenhum |
+| falha_com_retry_30s | nenhum | nenhum | nenhum |
+| falha_sem_retry | 500 [500–500] (n=5) | 500 [500–500] (n=5) | 500 [0–500] (n=5) |
+| lote_1000 | 1500 [1000–1500] (n=5) | 1000 [1000–1500] (n=5) | 1000 [0–1500] (n=5) |
+| lote_200 | 1500 [0–1500] (n=5) | 1500 [500–1500] (n=5) | 1500 [0–1500] (n=5) |
+| lote_50 | 1000 [0–1500] (n=5) | 1500 [1000–1500] (n=5) | 1500 [1000–1500] (n=5) |
+
+## Limite (req/s), critério `ok_integridade`
+
+| cenário | python_imperativo | python_funcional | elixir |
+|---|---|---|---|
+| baseline | 1000 [1000–1000] (n=5) | 1000 [500–1000] (n=5) | 1000 [1000–1000] (n=5) |
+| falha_baseline_com_retry | nenhum | nenhum | nenhum |
+| falha_baseline_sem_retry | 500 [500–500] (n=5) | 500 [500–500] (n=5) | 500 [0–500] (n=5) |
+| falha_com_retry | 500 [500–500] (n=5) | 500 [500–500] (n=5) | 500 [0–500] (n=5) |
+| falha_com_retry_20s | nenhum | nenhum | nenhum |
+| falha_com_retry_30s | nenhum | nenhum | nenhum |
+| falha_sem_retry | nenhum | nenhum | nenhum |
+| lote_1000 | 1500 [1000–1500] (n=5) | 1000 [1000–1500] (n=5) | 1000 [0–1500] (n=5) |
+| lote_200 | 1500 [0–1500] (n=5) | 1500 [500–1500] (n=5) | 1500 [0–1500] (n=5) |
+| lote_50 | 1000 [0–1500] (n=5) | 1500 [1000–1500] (n=5) | 1500 [1000–1500] (n=5) |
+
+## Limite (req/s), critério `sem_erros`
+
+| cenário | python_imperativo | python_funcional | elixir |
+|---|---|---|---|
+| baseline | 500 [250–1000] (n=5) | 500 [500–1000] (n=5) | 1000 [1000–1000] (n=5) |
+| falha_baseline_com_retry | nenhum | nenhum | nenhum |
+| falha_baseline_sem_retry | nenhum | nenhum | nenhum |
+| falha_com_retry | 500 [500–500] (n=5) | 500 [500–500] (n=5) | 500 [0–500] (n=5) |
+| falha_com_retry_20s | nenhum | nenhum | nenhum |
+| falha_com_retry_30s | nenhum | nenhum | nenhum |
+| falha_sem_retry | nenhum | nenhum | nenhum |
+| lote_1000 | 1500 [1000–1500] (n=5) | 1000 [1000–1500] (n=5) | 1000 [0–1500] (n=5) |
+| lote_200 | 1000 [0–1500] (n=5) | 1500 [500–1500] (n=5) | 1000 [0–1500] (n=5) |
+| lote_50 | 1000 [0–1500] (n=5) | 1500 [1000–1500] (n=5) | 1500 [1000–1500] (n=5) |
+
+## Validade da execução (C13)
+
+| implementação | degraus | válidos | api_reiniciou | fila_nao_drenou | gerador_atrasou | falha_execucao | registros perdidos pela fila |
+|---|---|---|---|---|---|---|---|
+| python_imperativo | 150 | 109 | 0 | 0 | 36 | 5 | 25561 |
+| python_funcional | 159 | 119 | 0 | 0 | 38 | 2 | 25566 |
+| elixir | 149 | 103 | 0 | 11 | 36 | 0 | 25489 |
+
+Degraus inválidos:
+
+| implementação | repetição | cenário | taxa | motivo |
+|---|---|---|---|---|
+| python_imperativo | rep_1 | baseline | 1500 | gerador_atrasou |
+| python_imperativo | rep_1 | baseline | 2000 | gerador_atrasou |
+| python_imperativo | rep_1 | lote_1000 | 1500 | gerador_atrasou |
+| python_imperativo | rep_1 | lote_1000 | 2000 | gerador_atrasou |
+| python_imperativo | rep_1 | lote_200 | 1500 | gerador_atrasou |
+| python_imperativo | rep_1 | lote_200 | 2000 | gerador_atrasou |
+| python_imperativo | rep_1 | lote_50 | 100 | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address] |
+| python_imperativo | rep_1 | lote_50 | 250 | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address] |
+| python_imperativo | rep_2 | baseline | 1500 | gerador_atrasou |
+| python_imperativo | rep_2 | baseline | 2000 | gerador_atrasou |
+| python_imperativo | rep_2 | lote_1000 | 2000 | gerador_atrasou |
+| python_imperativo | rep_2 | lote_1000 | 3000 | gerador_atrasou |
+| python_imperativo | rep_2 | lote_200 | 100 | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address] |
+| python_imperativo | rep_2 | lote_200 | 2000 | gerador_atrasou |
+| python_imperativo | rep_2 | lote_200 | 3000 | gerador_atrasou |
+| python_imperativo | rep_2 | lote_50 | 100 | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address] |
+| python_imperativo | rep_2 | lote_50 | 250 | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address] |
+| python_imperativo | rep_3 | baseline | 1500 | gerador_atrasou |
+| python_imperativo | rep_3 | baseline | 2000 | gerador_atrasou |
+| python_imperativo | rep_3 | lote_1000 | 1500 | gerador_atrasou |
+| python_imperativo | rep_3 | lote_1000 | 2000 | gerador_atrasou |
+| python_imperativo | rep_3 | lote_200 | 2000 | gerador_atrasou |
+| python_imperativo | rep_3 | lote_200 | 3000 | gerador_atrasou |
+| python_imperativo | rep_3 | lote_50 | 1500 | gerador_atrasou |
+| python_imperativo | rep_3 | lote_50 | 2000 | gerador_atrasou |
+| python_imperativo | rep_4 | baseline | 1500 | gerador_atrasou |
+| python_imperativo | rep_4 | baseline | 2000 | gerador_atrasou |
+| python_imperativo | rep_4 | lote_1000 | 2000 | gerador_atrasou |
+| python_imperativo | rep_4 | lote_1000 | 3000 | gerador_atrasou |
+| python_imperativo | rep_4 | lote_200 | 2000 | gerador_atrasou |
+| python_imperativo | rep_4 | lote_200 | 3000 | gerador_atrasou |
+| python_imperativo | rep_4 | lote_50 | 1500 | gerador_atrasou |
+| python_imperativo | rep_4 | lote_50 | 2000 | gerador_atrasou |
+| python_imperativo | rep_5 | baseline | 1500 | gerador_atrasou |
+| python_imperativo | rep_5 | baseline | 2000 | gerador_atrasou |
+| python_imperativo | rep_5 | lote_1000 | 2000 | gerador_atrasou |
+| python_imperativo | rep_5 | lote_1000 | 3000 | gerador_atrasou |
+| python_imperativo | rep_5 | lote_200 | 2000 | gerador_atrasou |
+| python_imperativo | rep_5 | lote_200 | 3000 | gerador_atrasou |
+| python_imperativo | rep_5 | lote_50 | 2000 | gerador_atrasou |
+| python_imperativo | rep_5 | lote_50 | 3000 | gerador_atrasou |
+| python_funcional | rep_1 | baseline | 1500 | gerador_atrasou |
+| python_funcional | rep_1 | baseline | 2000 | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address] |
+| python_funcional | rep_1 | lote_1000 | 1500 | gerador_atrasou |
+| python_funcional | rep_1 | lote_1000 | 2000 | gerador_atrasou |
+| python_funcional | rep_1 | lote_200 | 2000 | gerador_atrasou |
+| python_funcional | rep_1 | lote_200 | 3000 | gerador_atrasou |
+| python_funcional | rep_1 | lote_50 | 2000 | gerador_atrasou |
+| python_funcional | rep_1 | lote_50 | 3000 | gerador_atrasou |
+| python_funcional | rep_2 | baseline | 1500 | gerador_atrasou |
+| python_funcional | rep_2 | baseline | 2000 | gerador_atrasou |
+| python_funcional | rep_2 | lote_1000 | 1500 | gerador_atrasou |
+| python_funcional | rep_2 | lote_1000 | 2000 | gerador_atrasou |
+| python_funcional | rep_2 | lote_200 | 2000 | gerador_atrasou |
+| python_funcional | rep_2 | lote_200 | 3000 | gerador_atrasou |
+| python_funcional | rep_2 | lote_50 | 2000 | gerador_atrasou |
+| python_funcional | rep_2 | lote_50 | 3000 | gerador_atrasou |
+| python_funcional | rep_3 | baseline | 1500 | gerador_atrasou |
+| python_funcional | rep_3 | baseline | 2000 | gerador_atrasou |
+| python_funcional | rep_3 | lote_1000 | 2000 | gerador_atrasou |
+| python_funcional | rep_3 | lote_1000 | 3000 | gerador_atrasou |
+| python_funcional | rep_3 | lote_200 | 2000 | gerador_atrasou |
+| python_funcional | rep_3 | lote_200 | 3000 | gerador_atrasou |
+| python_funcional | rep_3 | lote_50 | 2000 | gerador_atrasou |
+| python_funcional | rep_3 | lote_50 | 3000 | gerador_atrasou |
+| python_funcional | rep_4 | baseline | 1500 | gerador_atrasou |
+| python_funcional | rep_4 | baseline | 2000 | falha_execucao: ClientConnectorError: Cannot connect to host api:8000 ssl:default [Cannot assign requested address] |
+| python_funcional | rep_4 | lote_1000 | 2000 | gerador_atrasou |
+| python_funcional | rep_4 | lote_1000 | 3000 | gerador_atrasou |
+| python_funcional | rep_4 | lote_200 | 1000 | gerador_atrasou |
+| python_funcional | rep_4 | lote_200 | 2000 | gerador_atrasou |
+| python_funcional | rep_4 | lote_200 | 3000 | gerador_atrasou |
+| python_funcional | rep_4 | lote_50 | 2000 | gerador_atrasou |
+| python_funcional | rep_4 | lote_50 | 3000 | gerador_atrasou |
+| python_funcional | rep_5 | baseline | 1500 | gerador_atrasou |
+| python_funcional | rep_5 | lote_1000 | 1500 | gerador_atrasou |
+| python_funcional | rep_5 | lote_1000 | 2000 | gerador_atrasou |
+| python_funcional | rep_5 | lote_200 | 1500 | gerador_atrasou |
+| python_funcional | rep_5 | lote_200 | 2000 | gerador_atrasou |
+| python_funcional | rep_5 | lote_50 | 1500 | gerador_atrasou |
+| python_funcional | rep_5 | lote_50 | 2000 | gerador_atrasou |
+| elixir | rep_1 | baseline | 1500 | gerador_atrasou |
+| elixir | rep_1 | baseline | 2000 | gerador_atrasou |
+| elixir | rep_1 | lote_1000 | 2000 | gerador_atrasou |
+| elixir | rep_1 | lote_1000 | 3000 | gerador_atrasou |
+| elixir | rep_1 | lote_200 | 2000 | gerador_atrasou |
+| elixir | rep_1 | lote_200 | 3000 | gerador_atrasou |
+| elixir | rep_1 | lote_50 | 1500 | gerador_atrasou |
+| elixir | rep_1 | lote_50 | 2000 | gerador_atrasou |
+| elixir | rep_2 | baseline | 1500 | gerador_atrasou |
+| elixir | rep_2 | baseline | 2000 | gerador_atrasou |
+| elixir | rep_2 | falha_baseline_com_retry | 500 | fila_nao_drenou |
+| elixir | rep_2 | falha_baseline_sem_retry | 500 | fila_nao_drenou |
+| elixir | rep_2 | falha_com_retry | 500 | fila_nao_drenou |
+| elixir | rep_2 | falha_com_retry_20s | 500 | fila_nao_drenou |
+| elixir | rep_2 | falha_com_retry_30s | 500 | fila_nao_drenou |
+| elixir | rep_2 | falha_sem_retry | 500 | fila_nao_drenou |
+| elixir | rep_2 | lote_1000 | 100 | fila_nao_drenou |
+| elixir | rep_2 | lote_1000 | 250 | fila_nao_drenou |
+| elixir | rep_2 | lote_200 | 100 | fila_nao_drenou |
+| elixir | rep_2 | lote_200 | 250 | fila_nao_drenou |
+| elixir | rep_2 | lote_50 | 2000 | gerador_atrasou |
+| elixir | rep_2 | lote_50 | 3000 | fila_nao_drenou; gerador_atrasou |
+| elixir | rep_3 | baseline | 1500 | gerador_atrasou |
+| elixir | rep_3 | baseline | 2000 | gerador_atrasou |
+| elixir | rep_3 | lote_1000 | 1500 | gerador_atrasou |
+| elixir | rep_3 | lote_1000 | 2000 | gerador_atrasou |
+| elixir | rep_3 | lote_200 | 1500 | gerador_atrasou |
+| elixir | rep_3 | lote_200 | 2000 | gerador_atrasou |
+| elixir | rep_3 | lote_50 | 2000 | gerador_atrasou |
+| elixir | rep_3 | lote_50 | 3000 | gerador_atrasou |
+| elixir | rep_4 | baseline | 1500 | gerador_atrasou |
+| elixir | rep_4 | baseline | 2000 | gerador_atrasou |
+| elixir | rep_4 | lote_1000 | 1500 | gerador_atrasou |
+| elixir | rep_4 | lote_1000 | 2000 | gerador_atrasou |
+| elixir | rep_4 | lote_200 | 2000 | gerador_atrasou |
+| elixir | rep_4 | lote_200 | 3000 | gerador_atrasou |
+| elixir | rep_4 | lote_50 | 2000 | gerador_atrasou |
+| elixir | rep_4 | lote_50 | 3000 | gerador_atrasou |
+| elixir | rep_5 | baseline | 1500 | gerador_atrasou |
+| elixir | rep_5 | baseline | 2000 | gerador_atrasou |
+| elixir | rep_5 | lote_1000 | 1500 | gerador_atrasou |
+| elixir | rep_5 | lote_1000 | 2000 | gerador_atrasou |
+| elixir | rep_5 | lote_200 | 2000 | gerador_atrasou |
+| elixir | rep_5 | lote_200 | 3000 | gerador_atrasou |
+| elixir | rep_5 | lote_50 | 1500 | gerador_atrasou |
+| elixir | rep_5 | lote_50 | 2000 | gerador_atrasou |
+
+
