@@ -54,7 +54,7 @@ DURACAO    ?= 60
 # banco novo a cada implementação: autovacuum, checkpoints e cache não passam de uma para outra (C13)
 BANCO_NOVO = $(COMPOSE) rm -sfv db && docker volume rm -f ponto_pgdata
 
-.PHONY: comparacao comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao         construir rodar-uma comparar-intercalado contrato
+.PHONY: metricas comparacao comparar-funcional comparar-imperativo comparar-elixir figuras-comparacao         construir rodar-uma comparar-intercalado contrato
 # contrato-funcional/imperativo/elixir ficam fora do .PHONY: o make não aplica a regra de
 # padrão contrato-% a alvos .PHONY, e o `make contrato` passaria sem testar nada
 
@@ -69,10 +69,14 @@ construir:      ## constrói as imagens das três APIs antes de medir (nada é c
 	$(ELIXIR) build api
 
 # uma implementação, uma repetição: make rodar-uma IMPL=elixir REP=2
+# O log da API vai para resultados/<impl>/rep_<k>/api.log mesmo se o experimento falhar (C17):
+# o próximo `up` recria o contêiner e o log se perde (no experimento 1, a causa do vazamento
+# do Elixir teve de ser deduzida por falta dele).
 rodar-uma:
 	$(BANCO_NOVO)
 	$(compose_$(IMPL)) up -d --wait db api
-	$(COMPOSE) run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep $(REP) 		--duracao-suite $(DURACAO) --saida resultados/$(IMPL)/rep_$(REP)
+	mkdir -p resultados/$(IMPL)/rep_$(REP)
+	$(COMPOSE) run --rm --no-deps carga ponto.carga.experimento --suite padrao --rep $(REP) 		--duracao-suite $(DURACAO) --saida resultados/$(IMPL)/rep_$(REP); status=$$?; 	$(compose_$(IMPL)) logs --no-color --timestamps api > resultados/$(IMPL)/rep_$(REP)/api.log 2>&1; 	exit $$status
 
 # repetições intercaladas com ordem rotativa (C14): rep 1 = F I E, rep 2 = I E F, rep 3 = E F I...
 # Uma deriva da máquina ao longo das horas se espalha entre as implementações em vez de
@@ -99,13 +103,18 @@ contrato: contrato-funcional contrato-imperativo contrato-elixir  ## confere que
 figuras-comparacao:  ## figuras por implementação/repetição + tabela e gráfico comparativos
 	$(COMPOSE) run --rm --no-deps carga ponto.analise.graficos --tudo --resultados resultados --saida figuras
 	$(COMPOSE) run --rm --no-deps carga ponto.analise.comparar --resultados resultados --saida figuras/comparacao
+	$(MAKE) --no-print-directory metricas
+
+metricas:       ## métricas de código das três implementações (H1, C17) em figuras/comparacao/codigo.md
+	$(COMPOSE) run --rm --no-deps -v "$(CURDIR):/repo:ro" carga ponto.analise.codigo --raiz /repo --saida figuras/comparacao
 
 comparacao: ambiente construir contrato calibrar comparar-intercalado figuras-comparacao  ## pipeline completo do artigo
 
 calibrar:       ## grava resultados/calibracao.txt; mede a taxa máxima que o gerador sustenta (servidor nulo)
 	mkdir -p resultados
 	$(COMPOSE) --profile ferramentas up -d --build eco
-	$(COMPOSE) run --rm --no-deps -e ECO_URL=http://eco:8001 carga ponto.carga.calibrar | tee resultados/calibracao.txt
+	# mesma duração dos degraus (C17): com 15 s o gerador passava a 3000 req/s e atrasava nos degraus de 60 s
+	$(COMPOSE) run --rm --no-deps -e ECO_URL=http://eco:8001 carga ponto.carga.calibrar 		--duracao $(DURACAO) --taxas 1000,1500,2000,2500,3000,4000 | tee resultados/calibracao.txt
 	$(COMPOSE) --profile ferramentas stop eco    # libera as CPUs antes do experimento
 
 ambiente:       ## registra hardware e versões em resultados/ambiente.txt (vai para o artigo)

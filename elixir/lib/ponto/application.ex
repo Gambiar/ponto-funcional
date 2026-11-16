@@ -13,7 +13,11 @@ defmodule Ponto.Application do
     })
 
     filhos = [
-      {Postgrex, [name: Ponto.DB, pool_size: String.to_integer(env("POOL_MAX", "20"))] ++ banco()},
+      # reconexão rápida depois de uma queda real (C17): o padrão do DBConnection espera até 30 s
+      # entre tentativas, e o asyncpg das versões Python reconecta na hora, no próximo uso
+      {Postgrex,
+       [name: Ponto.DB, pool_size: String.to_integer(env("POOL_MAX", "20")), backoff_min: 100, backoff_max: 1_000] ++
+         banco()},
       {Ponto.Fila, {String.to_integer(env("FILA_CAPACIDADE", "10000")), fn -> Ponto.Estado.incr(:pendentes) end}},
       Ponto.Consumidor
     ]

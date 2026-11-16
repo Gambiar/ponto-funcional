@@ -30,6 +30,9 @@ CASOS = [
     # queda de 2 s coberta pelo retry: nada pode se perder
     ("lote com falha e retry", Cenario("contrato_falha", modo="lote", lote=50, taxas=(20,), duracao=6,
                                        anomalias=0.2, falha_em=1, falha_seg=2.0), False),
+    # a mesma queda, real (C17): as três APIs têm de reconhecer os erros do driver e repetir
+    ("lote com queda real e retry", Cenario("contrato_falha_real", modo="lote", lote=50, taxas=(20,), duracao=6,
+                                            anomalias=0.2, falha_em=1, falha_seg=2.0, falha_tipo="real"), False),
 ]
 
 
@@ -59,7 +62,7 @@ async def verificar() -> list[str]:
             if not ok:
                 problemas.append(f"{nome}: {erros or r['incidente'] or 'gabarito divergente'}")
             if c.falha_em is not None and r["retries"] == 0:
-                problemas.append(f"{nome}: a falha simulada não provocou nenhum retry")
+                problemas.append(f"{nome}: a falha não provocou nenhum retry")
     return problemas
 
 

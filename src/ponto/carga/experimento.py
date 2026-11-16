@@ -53,13 +53,16 @@ class Cenario:
     lote: int = 200
     espera_ms: int = 100
     tentativas: int = 8
-    taxas: tuple[int, ...] = (100, 250, 500, 1000, 1500, 2000, 3000, 4000, 6000)
+    # 1250, 1750 e 2500 (C17): o baseline satura entre 1000 e 1500 e o lote passou de 2000 mas
+    # não de 3000 no experimento 1; com degraus de 500, diferenças entre implementações sumiam
+    taxas: tuple[int, ...] = (100, 250, 500, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 4000, 6000)
     duracao: int = 20            # segundos de carga por degrau
     anomalias: float = 0.05
     seed: int = 42
     timeout: float = 5.0
     falha_em: float | None = None  # segundo do degrau em que o banco "cai"
     falha_seg: float = 10.0
+    falha_tipo: str = "simulada"   # "simulada" (dentro da API) ou "real" (no Postgres, C17)
     parar_apos: int = 2          # para a rampa após N degraus seguidos com erro
     tolerancia: float = 1e-4     # taxa máxima de erro de integridade aceita no limite (C5)
     atraso_max_ms: float = 20.0  # acima disso o gerador não cumpriu a agenda: degrau inválido (C3)
@@ -81,6 +84,12 @@ SUITE_PADRAO = [
     # grupo de comparação: no baseline o cliente recebe 503 e sabe que deve reenviar (C7)
     Cenario("falha_baseline_com_retry", modo="baseline", taxas=(500,), duracao=30, falha_em=5),
     Cenario("falha_baseline_sem_retry", modo="baseline", taxas=(500,), duracao=30, falha_em=5, tentativas=1),
+    # queda real (C17): o Postgres encerra as conexões da API e recusa novas por 10 s; valida a
+    # falha simulada contra erros de verdade do driver (transação cortada, pool quebrado)
+    Cenario("falha_real_com_retry", taxas=(500,), duracao=30, falha_em=5, falha_tipo="real"),
+    Cenario("falha_real_sem_retry", taxas=(500,), duracao=30, falha_em=5, tentativas=1, falha_tipo="real"),
+    Cenario("falha_real_baseline_sem_retry", modo="baseline", taxas=(500,), duracao=30, falha_em=5,
+            tentativas=1, falha_tipo="real"),
 ]
 
 
@@ -109,6 +118,38 @@ async def _esperar_fila(sessao, limite=300.0) -> tuple[dict, bool]:
     return estado, bool(estado["ocioso"])
 
 
+def _url_manutencao(url: str) -> tuple[str, str]:
+    """(URL do banco `postgres`, nome do banco do experimento): a queda é comandada de fora dele."""
+    base, _, nome = url.rpartition("/")
+    return f"{base}/postgres", nome.split("?")[0]
+
+
+async def abrir_banco() -> None:
+    """Garante que o banco aceita conexões (uma queda real interrompida não pode vazar)."""
+    url, nome = _url_manutencao(DATABASE_URL)
+    conn = await asyncpg.connect(url)
+    try:
+        await conn.execute(f'ALTER DATABASE "{nome}" ALLOW_CONNECTIONS true')
+    finally:
+        await conn.close()
+
+
+async def queda_real(segundos: float) -> None:
+    """Queda real do banco por `segundos` (C17), sem precisar do Docker: recusa conexões novas
+    (SQLSTATE 55000) e encerra as existentes (57P01, transações em curso abortadas). Volta
+    sozinho no fim, mesmo se a tarefa for cancelada."""
+    url, nome = _url_manutencao(DATABASE_URL)
+    conn = await asyncpg.connect(url)
+    try:
+        await conn.execute(f'ALTER DATABASE "{nome}" ALLOW_CONNECTIONS false')
+        await conn.execute("SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                           "WHERE datname = $1 AND pid <> pg_backend_pid()", nome)
+        await asyncio.sleep(segundos)
+    finally:
+        await conn.execute(f'ALTER DATABASE "{nome}" ALLOW_CONNECTIONS true')
+        await conn.close()
+
+
 async def _ler_banco() -> dict[str, Desfecho]:
     conn = await asyncpg.connect(DATABASE_URL)
     try:
@@ -134,6 +175,8 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
     registros = base.registros
 
     # force_close: sem keep-alive, a conexão de administração nunca fica velha
+    if c.falha_tipo == "real":
+        await abrir_banco()
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(force_close=True)) as sessao:
         await _admin(sessao, "POST", "/admin/config", json={
             "modo": c.modo, "tamanho_lote": c.lote, "espera_ms": c.espera_ms, "tentativas": c.tentativas})
@@ -145,7 +188,9 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
         instancia_inicio = (await _admin(sessao, "GET", "/admin/estado")).get("instancia")
 
         eventos = {}
-        if c.falha_em is not None:
+        if c.falha_em is not None and c.falha_tipo == "real":
+            eventos[c.falha_em] = lambda: queda_real(c.falha_seg)
+        elif c.falha_em is not None:
             eventos[c.falha_em] = lambda: _admin(sessao, "POST", "/admin/falha", params={"segundos": c.falha_seg})
 
         inicio = time.monotonic()
@@ -165,6 +210,9 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
     ultimo_envio = max((e.t_envio for e in envios), default=0.0)
     atraso_p99 = round(percentil(atrasos, 99) * 1000, 1)
     contagens = resumir(avaliacoes)
+    gerador_ok = atraso_p99 <= c.atraso_max_ms
+    saturou = api_saturou(gerador_ok, contagens["erros_de_carga"], contagens["registros"])
+    sem_reinicio = estado.get("instancia") == instancia_inicio
     resumo = {
         "cenario": c.nome,
         "seed": c.seed,
@@ -173,12 +221,14 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
         "perfil_cpu": PERFIL_CPU,
         "taxa_obtida": round(len(envios) / ultimo_envio, 1) if ultimo_envio else 0.0,
         "atraso_gerador_p99_ms": atraso_p99,
-        "gerador_valido": atraso_p99 <= c.atraso_max_ms,
+        "gerador_valido": gerador_ok,
+        # o gerador atrasou porque a API já tinha saturado: degrau válido e reprovado (C17)
+        "api_saturou": saturou,
         # o degrau só vale se a fila drenou e a API não reiniciou (perderia fila, contadores e config)
         "drenou": drenou,
-        "api_sem_reinicio": estado.get("instancia") == instancia_inicio,
-        "degrau_valido": atraso_p99 <= c.atraso_max_ms and drenou and estado.get("instancia") == instancia_inicio,
-        "incidente": descrever_incidente(atraso_p99 <= c.atraso_max_ms, drenou, estado.get("instancia") == instancia_inicio),
+        "api_sem_reinicio": sem_reinicio,
+        "degrau_valido": (gerador_ok or saturou) and drenou and sem_reinicio,
+        "incidente": descrever_incidente(gerador_ok or saturou, drenou, sem_reinicio),
         "duracao_envio_s": round(duracao_envio, 1),
         "duracao_ate_drenar_s": round(duracao_total, 1),
         "lat_p50_ms": round(percentil(lat_ok, 50) * 1000, 1),
@@ -198,6 +248,19 @@ async def rodar_degrau(c: Cenario, taxa: int, pasta: Path) -> dict:
         for a in avaliacoes if a.categoria != "correto"
     ])
     return resumo
+
+
+SATURACAO_MIN = 0.01  # fração de erros de carga que caracteriza a API já saturada (C17)
+
+
+def api_saturou(gerador_ok: bool, erros_de_carga: int, registros: int) -> bool:
+    """O gerador atrasou, mas a API já recusava ou deixava sem resposta pelo menos 1% dos
+    registros: o atraso é consequência da saturação (milhares de conexões presas), não a causa.
+
+    O degrau conta como reprovado, não como inválido: se a API falhou com a carga que de fato
+    recebeu (menor ou igual à pedida), falharia também com a pedida. Sem isso, o degrau em que
+    a API satura aparecia como "gerador atrasou" na tabela de validade (C17)."""
+    return not gerador_ok and registros > 0 and erros_de_carga / registros >= SATURACAO_MIN
 
 
 def descrever_incidente(gerador_ok: bool, drenou: bool, sem_reinicio: bool, falha: str = "") -> str:

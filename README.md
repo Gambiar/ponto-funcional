@@ -105,11 +105,11 @@ Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU 
 
 **Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos, falha simulada em vez de queda real. Ver [Limitações](#limitações-ameaças-à-validade).
 
-O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C16, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
+O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C17, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
 
 ### Estado atual
 
-- Testes: 55 em Python (pytest) e 15 em Elixir (ExUnit), sem banco (`make testes`); gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
+- Testes: 63 em Python (pytest) e 16 em Elixir (ExUnit), sem banco (`make testes`); gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
 - Versão Elixir: compila sem avisos e passa no teste de contrato, como as duas versões Python (`make contrato`).
 - **Experimento 1** (nov/2026, servidor de 4 núcleos, 5 repetições): concluído e arquivado em [`experimento_1/`](experimento_1/README.md), com os resultados preliminares, os logs e os defeitos que ele revelou (C16), já corrigidos.
 - **Experimento 2**: a execução final, com C16; ver [`docs/vm.md`](docs/vm.md).
@@ -235,6 +235,7 @@ A rampa para depois de dois degraus seguidos reprovados (em carga, em integridad
 | `falha_sem_retry` | igual, com 1 tentativa |
 | `falha_com_retry_20s`, `falha_com_retry_30s` | quedas mais longas que o backoff acumulado (16,2 s) |
 | `falha_baseline_com_retry`, `falha_baseline_sem_retry` | a mesma queda no modo baseline (grupo de comparação de durabilidade) |
+| `falha_real_com_retry`, `falha_real_sem_retry`, `falha_real_baseline_sem_retry` | queda **real** de 10 s: o Postgres encerra as conexões da API e recusa novas (valida a falha simulada) |
 
 A falha é simulada pela API (`POST /admin/falha`), então funciona em qualquer máquina. Também é possível derrubar o banco de verdade durante um teste com `docker compose stop db` e `docker compose start db`.
 

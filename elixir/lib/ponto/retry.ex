@@ -67,8 +67,13 @@ defmodule Ponto.Retry do
   def conexao?(%DBConnection.ConnectionError{}), do: true
   def conexao?(%Ponto.FalhaSimulada{}), do: true
 
-  def conexao?(%Postgrex.Error{postgres: %{code: code}})
-      when code in [:too_many_connections, :cannot_connect_now, :admin_shutdown],
+  # mesmos SQLSTATE que ERROS_DE_CONEXAO das versões Python (C17): classe 08 (conexão),
+  # 53300 (conexões demais), 57P01-57P03 (servidor encerrou ou não aceita agora) e
+  # 55000 (banco não aceita conexões, como numa queda real)
+  def conexao?(%Postgrex.Error{postgres: %{pg_code: "08" <> _}}), do: true
+
+  def conexao?(%Postgrex.Error{postgres: %{pg_code: code}})
+      when code in ["53300", "57P01", "57P02", "57P03", "55000"],
       do: true
 
   def conexao?(_), do: false

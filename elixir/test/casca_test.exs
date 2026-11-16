@@ -51,4 +51,11 @@ defmodule Ponto.CascaTest do
     start_supervised!({Fila, {10, fn -> Process.sleep(200) end}})
     assert Fila.enfileirar(:a, 10) == :sem_resposta
   end
+
+  test "mesmos SQLSTATE das versões Python contam como conexão (C17)" do
+    erro = fn code -> %Postgrex.Error{postgres: %{pg_code: code}} end
+    for code <- ~w(08000 08003 08006 53300 57P01 57P02 57P03 55000), do: assert(Retry.conexao?(erro.(code)), code)
+    for code <- ~w(22P02 23505 42P01), do: refute(Retry.conexao?(erro.(code)), code)
+    assert Retry.conexao?(%DBConnection.ConnectionError{message: "closed"})
+  end
 end

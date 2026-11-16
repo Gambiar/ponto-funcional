@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+from itertools import combinations
 from pathlib import Path
 
 import matplotlib
@@ -16,6 +17,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 
+from ..carga.experimento import SATURACAO_MIN  # noqa: E402
 from .graficos import FUNDO, GRADE, SERIES, TEXTO, TEXTO_2, _estilo, limite  # noqa: E402
 
 IMPLEMENTACOES = {"python_imperativo": SERIES[1], "python_funcional": SERIES[0], "elixir": SERIES[6]}
@@ -40,16 +42,21 @@ def carregar(raiz: Path) -> pd.DataFrame:
 # ------------------------------------------------------------ reanálise da largada (C16)
 
 COLUNA_LARGADA = "atraso_p99_apos_largada_ms"
+COLUNA_LAT = "lat_p99_apos_largada_ms"  # p99 das 2xx sem a largada; substitui lat_p99_ms na reanálise
 
 
-def atraso_apos_largada(envios: Path, largada_s: float) -> float | None:
-    """Atraso p99 do gerador (ms) só com os registros agendados depois de `largada_s`.
-    None se o arquivo não existe ou está vazio (degrau interrompido)."""
+def apos_largada(envios: Path, largada_s: float) -> tuple[float | None, float | None]:
+    """(atraso p99 do gerador, latência p99 das 2xx), em ms, só com os registros agendados
+    depois de `largada_s`. (None, None) se o arquivo não existe ou está vazio."""
     if not envios.exists() or envios.stat().st_size == 0:
-        return None
-    e = pd.read_csv(envios, usecols=["t_agendado", "t_envio"])
+        return None, None
+    e = pd.read_csv(envios, usecols=["t_agendado", "t_envio", "latencia", "status"])
     e = e[e.t_agendado >= largada_s]
-    return round(float((e.t_envio - e.t_agendado).quantile(0.99)) * 1000, 1) if len(e) else None
+    if e.empty:
+        return None, None
+    ok = e[e.status.astype(str).isin(["201", "202"])]
+    atraso = round(float((e.t_envio - e.t_agendado).quantile(0.99)) * 1000, 1)
+    return atraso, (round(float(ok.latencia.quantile(0.99)) * 1000, 1) if len(ok) else None)
 
 
 def _atraso_max(pasta: Path) -> float:
@@ -72,17 +79,27 @@ def revalidar(df: pd.DataFrame, largada_s: float) -> pd.DataFrame:
     if df.empty or "degrau_valido" not in df:
         return df
     d = df.copy()
-    if COLUNA_LARGADA not in d:
-        d[COLUNA_LARGADA] = float("nan")
+    for coluna in (COLUNA_LARGADA, COLUNA_LAT):
+        if coluna not in d:
+            d[coluna] = float("nan")
     faltam = d[COLUNA_LARGADA].isna() & ~d.incidente.fillna("").astype(str).str.contains("falha_execucao")
-    d.loc[faltam, COLUNA_LARGADA] = [
-        atraso_apos_largada(Path(r.pasta) / f"envios_{int(r.taxa_alvo)}.csv", largada_s)
-        for r in d[faltam].itertuples()
-    ]
+    medidas = [apos_largada(Path(r.pasta) / f"envios_{int(r.taxa_alvo)}.csv", largada_s)
+               for r in d[faltam].itertuples()]
+    if medidas:
+        d.loc[faltam, COLUNA_LARGADA] = [m[0] for m in medidas]
+        d.loc[faltam, COLUNA_LAT] = [m[1] for m in medidas]
     limite_ms = d.pasta.map(lambda p: _atraso_max(Path(p)))
-    gerador_ok = d[COLUNA_LARGADA].astype(float) <= limite_ms  # NaN (sem envios) -> inválido
+    atrasou = ~(d[COLUNA_LARGADA].astype(float) <= limite_ms)  # NaN (sem envios) -> atrasou
+    carga = d.get("erros_de_carga", pd.Series(0, index=d.index)).fillna(0).astype(float)
+    registros = d.get("registros", pd.Series(0, index=d.index)).fillna(0).astype(float)
+    tem_envios = d[COLUNA_LARGADA].notna()
+    saturou = atrasou & tem_envios & (registros > 0) & (carga >= SATURACAO_MIN * registros)  # C17
+    gerador_ok = ~atrasou | saturou
     incidente = d.incidente.fillna("").astype(str).replace("0", "")
     falha = incidente.str.contains("falha_execucao")
+    if "api_saturou" in d:  # medido no experimento (resultados posteriores a C17)
+        d["api_saturou_original"] = d["api_saturou"]
+    d["api_saturou"] = saturou
     for coluna in ("degrau_valido", "gerador_valido", "incidente"):
         d[f"{coluna}_original"] = incidente if coluna == "incidente" else d[coluna]
     d["gerador_valido"] = gerador_ok
@@ -116,7 +133,7 @@ def exportar(d: pd.DataFrame, destino: Path) -> None:
     """Grava resumo.csv (com a coluna da reanálise, se houver) e config.json de cada cenário
     em destino/<impl>/<rep>/<cenario>/: arquivo compacto, sem os envios e erros por registro,
     que o `comparar` lê de novo com a mesma reanálise."""
-    restauradas = ("degrau_valido", "gerador_valido", "incidente")
+    restauradas = ("degrau_valido", "gerador_valido", "incidente", "api_saturou")
     internas = {"impl", "rep", "pasta"} | {f"{c}_original" for c in restauradas}
     for (impl, rep, pasta), g in d.groupby(["impl", "rep", "pasta"]):
         alvo = destino / impl / rep / Path(pasta).name
@@ -125,7 +142,9 @@ def exportar(d: pd.DataFrame, destino: Path) -> None:
         for c in restauradas:  # o arquivo guarda o que foi medido; a reanálise é refeita ao ler
             if f"{c}_original" in g:
                 g[c] = g[f"{c}_original"]
-        g[[c for c in g.columns if c not in internas]].to_csv(alvo / "resumo.csv", index=False)
+        # api_saturou sem original veio só da reanálise (resultados anteriores a C17): não é medida
+        fora = internas | ({"api_saturou"} if "api_saturou_original" not in g else set())
+        g[[c for c in g.columns if c not in fora]].to_csv(alvo / "resumo.csv", index=False)
         if (Path(pasta) / "config.json").exists():
             shutil.copy(Path(pasta) / "config.json", alvo / "config.json")
 
@@ -160,6 +179,58 @@ def tabela(df: pd.DataFrame, criterio: str) -> str:
     return "\n".join(linhas)
 
 
+# ------------------------------------------------------------ latência (H2, C17)
+
+PARES = (("python_imperativo", "python_funcional"), ("python_funcional", "elixir"))
+ROTULO = {"python_imperativo": "imp", "python_funcional": "fun", "elixir": "ex"}
+
+
+def mann_whitney(a: list[float], b: list[float]) -> float:
+    """p bilateral exato do teste de Mann-Whitney (empates por posto médio).
+
+    Exato por enumeração: com 5 repetições de cada lado são C(10, 5) = 252 partições, e o
+    menor p possível é 2/252 ≈ 0,008. Com 3 contra 3, o menor é 0,1: nunca significativo."""
+    juntos = sorted(a + b)
+    posto = {v: sum(i + 1 for i, x in enumerate(juntos) if x == v) / juntos.count(v) for v in juntos}
+    postos = [posto[v] for v in a + b]
+    n = len(a)
+    media = n * (len(postos) + 1) / 2
+    observado = abs(sum(postos[:n]) - media)
+    particoes = list(combinations(range(len(postos)), n))
+    extremos = sum(abs(sum(postos[i] for i in idx) - media) >= observado - 1e-9 for idx in particoes)
+    return extremos / len(particoes)
+
+
+def tabela_latencia(df: pd.DataFrame, minimo: int = 3) -> str:
+    """p99 (ms) por implementação nos degraus válidos e aprovados em carga (sem timeouts, então
+    o p99 das 2xx é comparável), com o p de Mann-Whitney entre pares. Só entram degraus em
+    que as três implementações têm pelo menos `minimo` repetições."""
+    d = df[~df.cenario.str.startswith("falha")]
+    if "degrau_valido" in d:
+        d = d[d.degrau_valido.astype(bool)]
+    if "ok_carga" in d:
+        d = d[d.ok_carga.astype(bool)]
+    impls = list(IMPLEMENTACOES)
+    pares = [f"p ({ROTULO[a]}×{ROTULO[b]})" for a, b in PARES]
+    linhas = ["| cenário | taxa | " + " | ".join(impls + pares) + " |",
+              "|---" * (2 + len(impls) + len(pares)) + "|"]
+    for (cenario, taxa), g in d.groupby(["cenario", "taxa_alvo"]):
+        coluna = COLUNA_LAT if COLUNA_LAT in g and g[COLUNA_LAT].notna().all() else "lat_p99_ms"
+        amostras = {i: g[g.impl == i][coluna].astype(float).tolist() for i in impls}
+        if min(len(v) for v in amostras.values()) < minimo:
+            continue
+        cel = [f"{pd.Series(v).median():.1f} [{min(v):.1f}–{max(v):.1f}]" for v in amostras.values()]
+        ps = [mann_whitney(amostras[a], amostras[b]) for a, b in PARES]
+        cel += [f"**{p:.3f}**" if p < 0.05 else f"{p:.3f}" for p in ps]
+        linhas.append(f"| {cenario} | {int(taxa)} | " + " | ".join(cel) + " |")
+    if len(linhas) == 2:
+        return "_nenhum degrau com repetições suficientes nas três implementações_\n"
+    return ("Latência p99 das respostas 2xx (ms), mediana [mín–máx] das repetições, nos degraus válidos e "
+            "sem erro de carga. p: Mann-Whitney exato bilateral; em negrito, p < 0,05. São muitos testes: "
+            "um p isolado perto de 0,05 não basta, o que conta é a consistência ao longo das taxas.\n\n"
+            + "\n".join(linhas) + "\n")
+
+
 def tabela_validade(df: pd.DataFrame) -> str:
     """Quantos degraus de cada implementação foram invalidados e por quê (C13).
     Vai para os resultados finais: um limite só é comparável se os degraus valem."""
@@ -171,15 +242,17 @@ def tabela_validade(df: pd.DataFrame) -> str:
         perdidos=(df["perdidos_servidor"] if "perdidos_servidor" in df else vazio.replace("", 0)).fillna(0),
     )
     motivos = ["api_reiniciou", "fila_nao_drenou", "gerador_atrasou", "falha_execucao"]
-    linhas = ["| implementação | degraus | válidos | " + " | ".join(motivos) + " | registros perdidos pela fila |",
-              "|---" * (len(motivos) + 4) + "|"]
+    saturou = d["api_saturou"].fillna(False).astype(bool) if "api_saturou" in d else pd.Series(False, index=d.index)
+    linhas = ["| implementação | degraus | válidos | " + " | ".join(motivos)
+              + " | registros perdidos pela fila | API saturou (válido, reprovado) |",
+              "|---" * (len(motivos) + 5) + "|"]
     for impl in IMPLEMENTACOES:
         g = d[d.impl == impl]
         if g.empty:
             continue
         contagens = [str(int(g.incidente.str.contains(m).sum())) for m in motivos]
         linhas.append(f"| {impl} | {len(g)} | {int(g.degrau_valido.astype(bool).sum())} | "
-                      + " | ".join(contagens) + f" | {int(g.perdidos.astype(float).sum())} |")
+                      + " | ".join(contagens) + f" | {int(g.perdidos.astype(float).sum())} | {int(saturou[g.index].sum())} |")
     detalhes = d[d.incidente != ""]
     if not detalhes.empty:
         linhas += ["", "Degraus inválidos:", "", "| implementação | repetição | cenário | taxa | motivo |",
@@ -289,6 +362,7 @@ def main() -> None:
     figura_p99(df, a.saida)
     figura_validade(df, a.saida)
     texto = cabecalho + "".join(f"## Limite (req/s), critério `{c}`\n\n{tabela(df, c)}\n\n" for c in criterios)
+    texto += f"## Latência p99 (H2, C17)\n\n{tabela_latencia(df)}\n"
     texto += f"## Validade da execução (C13)\n\n{tabela_validade(df)}\n"
     (a.saida / "comparacao.md").write_text(texto, encoding="utf-8")
     print(texto)

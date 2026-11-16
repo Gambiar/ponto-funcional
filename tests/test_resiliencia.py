@@ -59,3 +59,11 @@ def test_retry_nao_repete_erro_de_dados():
     with pytest.raises(ErroDeDados):
         rodar(dado_ruim())
     assert len(chamadas) == 1
+
+
+def test_queda_real_e_comandada_do_banco_de_manutencao():
+    """C17: ALTER DATABASE ... ALLOW_CONNECTIONS roda conectado ao banco `postgres`, não ao que cai."""
+    from ponto.carga.experimento import SUITE_PADRAO, _url_manutencao
+    assert _url_manutencao("postgresql://ponto:ponto@db:5432/ponto") == ("postgresql://ponto:ponto@db:5432/postgres", "ponto")
+    reais = [c for c in SUITE_PADRAO if c.falha_tipo == "real"]
+    assert {c.nome for c in reais} == {"falha_real_com_retry", "falha_real_sem_retry", "falha_real_baseline_sem_retry"}

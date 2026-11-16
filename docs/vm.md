@@ -98,6 +98,8 @@ A execução completa é **longa**. Estimativa com os padrões (5 repetições �
 | Uma implementação, 5 repetições | 4–5 h |
 | **Três implementações** | **12–15 h** |
 
+Referência: o experimento 1 levou 9h40 no servidor de 4 núcleos; com os degraus de 1250, 1750 e 2500 req/s e os cenários de queda real (C17), conte com cerca de 12–14 h nessa mesma máquina.
+
 Rode dentro do `tmux`, para sobreviver à queda da conexão SSH:
 
 ```bash

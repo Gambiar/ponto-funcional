@@ -86,6 +86,10 @@ async def _cumprir_agenda(
                 await asyncio.sleep(espera)
             tarefas.append(asyncio.create_task(_enviar(sessao, url, r, t0, agendado)))
         resultados = await asyncio.gather(*tarefas, return_exceptions=True)
+    # _enviar trata os próprios erros: uma exceção aqui veio de um evento (ex.: a queda do banco
+    # não aconteceu) e não pode sumir, senão o degrau parece uma falha que não houve (C17)
+    if erro := next((x for x in resultados if isinstance(x, BaseException)), None):
+        raise erro
     return [x for x in resultados if isinstance(x, Envio)]
 
 

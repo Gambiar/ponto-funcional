@@ -39,9 +39,14 @@ INSTANCIA = uuid.uuid4().hex
 ERROS_DE_CONEXAO = (
     ConnectionError,
     OSError,
-    asyncpg.PostgresConnectionError,
+    asyncpg.PostgresConnectionError,  # SQLSTATE 08xxx
     asyncpg.InterfaceError,
-    asyncpg.TooManyConnectionsError,
+    asyncpg.TooManyConnectionsError,  # 53300
+    # queda real do banco (C17): conexão encerrada pelo servidor e banco recusando conexões
+    asyncpg.AdminShutdownError,  # 57P01
+    asyncpg.CrashShutdownError,  # 57P02
+    asyncpg.CannotConnectNowError,  # 57P03
+    asyncpg.exceptions.ObjectNotInPrerequisiteStateError,  # 55000: banco não aceita conexões
 )
 
 

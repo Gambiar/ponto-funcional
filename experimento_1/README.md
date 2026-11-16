@@ -50,7 +50,11 @@ O defeito (c) está na casca imperativa da versão Elixir, fora do núcleo funci
 **Reanálise.** (a) pode ser corrigido depois da coleta, porque os `envios_*.csv` têm o horário
 agendado e o real de cada requisição: o atraso p99 é medido só depois dos 2 s iniciais. (b) e (c)
 não: esses degraus continuam inválidos e as repetições sem limite mensurável ficam fora da mediana
-(por isso há `n=3` e `n=4`). A reanálise revalidou 19 degraus no imperativo, 20 no funcional e 19 no Elixir.
+(por isso há `n=3` e `n=4`). Na mesma reanálise, a latência p99 também é medida sem os 2 s iniciais
+(coluna `lat_p99_apos_largada_ms`), e um degrau em que o gerador atrasou **porque a API já tinha
+saturado** (≥ 1% de erros de carga) passa a contar como válido e reprovado (C17): eram 26 degraus de
+baseline a 1500–2000 req/s e 4 de lote a 3000, todos do Elixir. No total, a reanálise revalidou 28
+degraus no imperativo, 27 no funcional e 32 no Elixir.
 
 ## Resultados (reanálise C16)
 
@@ -61,17 +65,25 @@ Limite em req/s, critério `ok_carga`, mediana [mín–máx] das repetições:
 | baseline | 1000 | 1000 | 1000 | 1000 |
 | lote_50 / 200 / 1000 | 2000 | 2000 | 2000 | 1000–1500 |
 
-Os degraus de 3000 req/s continuam inválidos (atraso p99 do gerador de cerca de 200 ms mesmo depois
-da largada), então o limite do lote é **≥ 2000**; acima disso o teto é do gerador nesta máquina.
+Nas versões Python, os degraus de lote a 3000 req/s continuam inválidos (atraso p99 do gerador de
+cerca de 200 ms mesmo depois da largada, sem erros de carga), então o limite do lote é **≥ 2000**;
+acima disso o teto é do gerador nesta máquina. No Elixir, 4 desses degraus encheram a fila
+(`recusado:fila_cheia`) e contam como reprovados: lá o limite de 2000 é real nessas repetições. Com
+tão poucos degraus, a diferença fica para o experimento 2 confirmar.
 Tabelas completas, pelos três critérios, em `figuras/comparacao_reanalise/comparacao.md`.
 
-Latência p99 das respostas 2xx (ms), depois dos 2 s iniciais, mediana [mín–máx] das repetições:
+Latência p99 das respostas 2xx (ms), depois dos 2 s iniciais, mediana [mín–máx] das repetições, e
+p do teste de Mann-Whitney exato (n = 5 contra 5; o menor p possível é 0,008). Tabela completa,
+todos os degraus, em `figuras/comparacao_reanalise/comparacao.md`:
 
-| degrau | imperativo | funcional | Elixir |
-|---|---|---|---|
-| baseline, 1000 req/s | 168 [115–223] | 202 [166–273] | 66 [41–97] |
-| lote_200, 2000 req/s | 15 [12–17] | 37 [15–68] | 7 [5–8] |
-| lote_1000, 2000 req/s | 11 [10–37] | 41 [18–104] | 6 [5–7] |
+| degrau | imperativo | funcional | Elixir | p imp×fun | p fun×Elixir |
+|---|---|---|---|---|---|
+| baseline, 500 req/s | 8,1 [7,2–11,0] | 13,1 [9,2–15,1] | 6,6 [6,0–7,7] | 0,056 | **0,008** |
+| baseline, 1000 req/s | 168 [115–222] | 202 [166–273] | 67 [41–97] | 0,421 | **0,008** |
+| lote_200, 1500 req/s | 4,7 [3,0–5,3] | 5,5 [4,3–7,4] | 1,8 [1,5–2,3] | 0,175 | **0,016** |
+| lote_200, 2000 req/s | 14,7 [12,1–17,3] | 36,9 [15,1–67,5] | 6,8 [5,3–8,4] | 0,095 | **0,016** |
+| lote_1000, 1000 req/s | 1,3 [1,2–1,4] | 1,7 [1,5–2,2] | 0,9 [0,8–1,0] | **0,008** | **0,008** |
+| lote_1000, 2000 req/s | 11,4 [9,9–37,0] | 40,7 [17,7–104] | 6,2 [5,0–7,1] | 0,056 | **0,016** |
 
 Cenários de falha a 500 req/s (praticamente iguais nas três implementações e nas 5 repetições):
 
@@ -86,9 +98,11 @@ Cenários de falha a 500 req/s (praticamente iguais nas três implementações e
 ## Conclusões preliminares
 
 - **H1 (estilo): confirmada na vazão e nos erros**, com uma ressalva. Limites iguais, mesmos tipos
-  e contagens de erro. O funcional tem p99 maior de forma consistente (de 20% a quase 4× conforme o degrau),
-  mas as faixas se sobrepõem: é tendência, não diferença estabelecida.
-- **H2 (runtime): confirmada.** O Elixir tem p99 2,5 a 6× menor perto da saturação, com os mesmos
+  e contagens de erro. O funcional tem p99 maior na maioria dos degraus perto da saturação (de 20%
+  a quase 4×), mas só um degrau tem diferença significativa (p < 0,05); nos outros, p de 0,06 a 0,4.
+  É tendência, não diferença estabelecida.
+- **H2 (runtime): confirmada.** O Elixir tem p99 2,5 a 6× menor perto da saturação, com diferença
+  significativa contra o Python funcional em quase todos os degraus a partir de 1000 req/s, com os mesmos
   tipos de erro e o mesmo ponto de saturação (o gargalo é o banco, com 1 CPU). Extra: zero
   `ordem_invertida` no baseline a 1000 req/s nas 5 repetições (`sem_erros` 1000, contra 500 do Python).
 - **H3 (arquitetura): confirmada.** O lote aguenta pelo menos 2× a vazão do baseline e, com o banco fora e
@@ -101,5 +115,11 @@ Cenários de falha a 500 req/s (praticamente iguais nas três implementações e
 Com C16 corrigido no código: largada sincronizada do gerador, `sysctls` de portas no contêiner de
 carga, repetição automática de degrau que falha por erro de execução, contador de pendentes do Elixir
 dentro da fila. A reanálise (`--descontar-largada`) não é mais necessária para resultados novos.
+
+E, a partir da revisão deste experimento contra a proposta (C17): log da API salvo por repetição;
+calibração com degraus de 60 s; degraus de 1250, 1750 e 2500 req/s; cenários de **queda real** do
+banco; a mesma classificação de erros de conexão nas três APIs (antes, numa queda real, cada uma
+reagiria de um jeito); tabela de latência com teste estatístico; métricas de código para H1
+(`make metricas`); e o degrau "API saturou" separado de "gerador atrasou".
 Para medir acima de 2000 req/s no lote é preciso uma máquina com mais núcleos para o gerador
 (perfil de 8 núcleos).

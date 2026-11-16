@@ -69,7 +69,9 @@ def _degrau(pasta, taxa, atrasos, incidente, drenou=True):
     """Escreve envios_<taxa>.csv com um atraso por registro (1 registro a cada 0,01 s)."""
     pasta.mkdir(parents=True, exist_ok=True)
     pd.DataFrame({"t_agendado": [i * 0.01 for i in range(len(atrasos))],
-                  "t_envio": [i * 0.01 + a for i, a in enumerate(atrasos)]}).to_csv(pasta / f"envios_{taxa}.csv", index=False)
+                  "t_envio": [i * 0.01 + a for i, a in enumerate(atrasos)],
+                  "latencia": [0.001 + a for a in atrasos],
+                  "status": [202] * len(atrasos)}).to_csv(pasta / f"envios_{taxa}.csv", index=False)
     return dict(taxa_alvo=taxa, ok_carga=True, degrau_valido=not incidente, gerador_valido="gerador" not in incidente,
                 drenou=drenou, api_sem_reinicio=True, incidente=incidente, atraso_gerador_p99_ms=0.0)
 
@@ -96,4 +98,41 @@ def test_reanalise_da_largada_revalida_so_o_surto_inicial(tmp_path):
     exportar(d, tmp_path / "arquivo")
     salvo = pd.read_csv(tmp_path / "arquivo" / "elixir" / "rep_1" / "lote_200" / "resumo.csv")
     assert not salvo.degrau_valido.any() and "atraso_p99_apos_largada_ms" in salvo
+    assert salvo.lat_p99_apos_largada_ms.iloc[0] == 2.0  # o surto ficou fora da latência também
     assert revalidar(carregar(tmp_path / "arquivo"), 2.0).degrau_valido.tolist() == [True, False, False]
+    assert "api_saturou" not in salvo  # só existia na reanálise
+
+    # resultado novo, com api_saturou medido: a exportação guarda o valor medido
+    pd.DataFrame([{**l, "api_saturou": False} for l in linhas]).to_csv(pasta / "resumo.csv", index=False)
+    exportar(revalidar(carregar(tmp_path), 2.0), tmp_path / "novo")
+    novo = pd.read_csv(tmp_path / "novo" / "elixir" / "rep_1" / "lote_200" / "resumo.csv")
+    assert novo.api_saturou.tolist() == [False, False, False]
+
+
+def test_mann_whitney_exato():
+    from ponto.analise.comparar import mann_whitney
+    assert abs(mann_whitney([1, 2, 3, 4, 5], [6, 7, 8, 9, 10]) - 2 / 252) < 1e-12
+    assert mann_whitney([1, 2, 3], [4, 5, 6]) == 0.1          # 3×3: nunca abaixo de 0,1
+    assert mann_whitney([5, 5, 5], [5, 5, 5]) == 1.0          # empates totais
+    assert abs(mann_whitney([1, 2, 3, 4, 6], [5, 7, 8, 9, 10]) - 4 / 252) < 1e-12
+
+
+def test_api_saturada_e_reprovada_nao_invalida():
+    """C17: gerador atrasou porque a API saturou (≥ 1% de erros de carga) -> degrau válido e reprovado."""
+    from ponto.carga.experimento import api_saturou
+    assert api_saturou(False, 100, 1000)
+    assert not api_saturou(False, 5, 1000)      # poucos erros: o atraso pode ser do gerador
+    assert not api_saturou(True, 500, 1000)     # gerador em dia: nada a reclassificar
+    assert not api_saturou(False, 0, 0)
+
+
+def test_tabela_latencia_so_com_degraus_validos_e_aprovados():
+    from ponto.analise.comparar import tabela_latencia
+    linhas = [dict(impl=i, rep=f"rep_{k}", cenario="lote_200", taxa_alvo=1000, degrau_valido=True, ok_carga=True,
+                   lat_p99_ms=base + k) for i, base in (("python_imperativo", 10), ("python_funcional", 20), ("elixir", 1))
+              for k in range(1, 6)]
+    linhas.append(dict(impl="elixir", rep="rep_9", cenario="lote_200", taxa_alvo=1000, degrau_valido=False,
+                       ok_carga=True, lat_p99_ms=9999))
+    texto = tabela_latencia(pd.DataFrame(linhas))
+    assert "| lote_200 | 1000 | 13.0 [11.0–15.0] | 23.0 [21.0–25.0] | 4.0 [2.0–6.0] | **0.008** | **0.008** |" in texto
+    assert "9999" not in texto

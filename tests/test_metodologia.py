@@ -83,3 +83,40 @@ def test_mesmo_servidor_sempre_no_mesmo_processo():
     for k, parte in enumerate(partes):
         for r, _ in parte:
             assert donos.setdefault(r.servidor, k) == k
+
+
+def test_metricas_de_codigo_contam_decisoes_e_mutacao():
+    """C17: a mesma definição para Python (ast) e Elixir (léxico)."""
+    from ponto.analise.codigo import medir_elixir, medir_python
+    py = medir_python('''
+def pura(x):
+    """doc"""
+    return 1 if x and x > 0 else 2
+
+class C:
+    def suja(self, itens):
+        for i in itens:
+            self.total += i
+            self.lista.append(i)
+''')
+    assert (py.funcoes, py.decisoes, py.mutacao_compartilhada, py.isolaveis) == (2, 3, 2, 1)
+    assert py.sloc == 7
+    ex = medir_elixir('''
+defmodule M do
+  @doc """
+  doc
+  """
+  def f(x) when x > 0, do: x
+  def f(_), do: 0
+
+  def g(n) do
+    Estado.incr(:n)
+    case n do
+      1 -> :a
+      _ -> :b
+    end
+  end
+end
+''')
+    assert ex.funcoes == 3 and ex.mutacao_compartilhada == 1 and ex.isolaveis == 2
+    assert ex.decisoes == 1 + 1 + 2  # guarda, cláusula extra de f, dois ramos do case
