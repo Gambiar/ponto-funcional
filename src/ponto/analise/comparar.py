@@ -97,8 +97,6 @@ def revalidar(df: pd.DataFrame, largada_s: float) -> pd.DataFrame:
     gerador_ok = ~atrasou | saturou
     incidente = d.incidente.fillna("").astype(str).replace("0", "")
     falha = incidente.str.contains("falha_execucao")
-    if "api_saturou" in d:  # medido no experimento (resultados posteriores a C17)
-        d["api_saturou_original"] = d["api_saturou"]
     d["api_saturou"] = saturou
     for coluna in ("degrau_valido", "gerador_valido", "incidente"):
         d[f"{coluna}_original"] = incidente if coluna == "incidente" else d[coluna]
@@ -133,18 +131,18 @@ def exportar(d: pd.DataFrame, destino: Path) -> None:
     """Grava resumo.csv (com a coluna da reanálise, se houver) e config.json de cada cenário
     em destino/<impl>/<rep>/<cenario>/: arquivo compacto, sem os envios e erros por registro,
     que o `comparar` lê de novo com a mesma reanálise."""
-    restauradas = ("degrau_valido", "gerador_valido", "incidente", "api_saturou")
-    internas = {"impl", "rep", "pasta"} | {f"{c}_original" for c in restauradas}
     for (impl, rep, pasta), g in d.groupby(["impl", "rep", "pasta"]):
         alvo = destino / impl / rep / Path(pasta).name
         alvo.mkdir(parents=True, exist_ok=True)
-        g = g.copy()
-        for c in restauradas:  # o arquivo guarda o que foi medido; a reanálise é refeita ao ler
-            if f"{c}_original" in g:
-                g[c] = g[f"{c}_original"]
-        # api_saturou sem original veio só da reanálise (resultados anteriores a C17): não é medida
-        fora = internas | ({"api_saturou"} if "api_saturou_original" not in g else set())
-        g[[c for c in g.columns if c not in fora]].to_csv(alvo / "resumo.csv", index=False)
+        # o arquivo guarda o resumo medido tal como foi gravado (texto original, linha a linha) e só
+        # acrescenta as colunas da reanálise; a reanálise é refeita ao ler
+        original = pd.read_csv(Path(pasta) / "resumo.csv", dtype=str, keep_default_na=False)
+        novas = [c for c in (COLUNA_LARGADA, COLUNA_LAT) if c in g and c not in original]
+        if novas:
+            valores = g.set_index(g.taxa_alvo.astype(int).astype(str))[novas]
+            for c in novas:
+                original[c] = original.taxa_alvo.map(valores[c]).map(lambda v: "" if pd.isna(v) else f"{v:g}")
+        original.to_csv(alvo / "resumo.csv", index=False, lineterminator="\n")
         if (Path(pasta) / "config.json").exists():
             shutil.copy(Path(pasta) / "config.json", alvo / "config.json")
 
