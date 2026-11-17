@@ -1,0 +1,7 @@
+cenario,seed,taxa_alvo,processos_gerador,perfil_cpu,taxa_obtida,atraso_gerador_p99_ms,gerador_valido,api_saturou,drenou,api_sem_reinicio,degrau_valido,incidente,duracao_envio_s,duracao_ate_drenar_s,lat_p50_ms,lat_p95_ms,lat_p99_ms,lat_p99_todas_ms,lote_medio,retries,perdidos_servidor,registros,corretos,erros_de_carga,erros_de_integridade,acerto_gabarito,disponibilidade,integridade,taxa_erro_integridade,erros_de_integridade_sem_ordem,sem_erros,ok_carga,ok_integridade,n_divergente:ordem_invertida,n_divergente:saida_antes_da_entrada,n_processado_sem_confirmacao
+baseline,5042,100,2,4,100.0,2.1,True,False,True,True,True,,60.5,60.5,2.3,3.3,7.1,7.1,0,0,0,5954,5954,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0,0,0
+baseline,5042,250,2,4,250.0,1.9,True,False,True,True,True,,60.4,60.4,1.8,2.9,6.4,6.4,0,0,0,14855,14855,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0,0,0
+baseline,5042,500,2,4,499.9,1.9,True,False,True,True,True,,60.8,60.8,1.5,2.3,6.7,6.7,0,0,0,29755,29755,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0,0,0
+baseline,5042,1000,2,4,999.6,1.2,True,False,True,True,True,,61.5,61.5,2.0,110.5,217.6,217.6,0,0,0,59404,59404,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0,0,0
+baseline,5042,1250,2,4,1249.3,1.2,True,False,True,True,True,,62.1,62.1,2.9,265.9,446.1,446.1,0,0,0,74316,74298,0,18,0.999758,1.0,0.999758,0.00024221,0,False,True,False,18,0,0
+baseline,5042,1500,2,4,1499.0,96.6,False,True,True,True,True,,67.8,68.4,347.5,3986.7,5481.3,5960.9,0,0,0,89135,70473,16823,1839,0.971796,0.811264,0.974569,0.02543146,1678,False,False,False,161,1678,16823

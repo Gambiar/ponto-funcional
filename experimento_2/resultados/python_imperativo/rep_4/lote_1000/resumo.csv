@@ -1,0 +1,13 @@
+cenario,seed,taxa_alvo,processos_gerador,perfil_cpu,taxa_obtida,atraso_gerador_p99_ms,gerador_valido,api_saturou,drenou,api_sem_reinicio,degrau_valido,incidente,duracao_envio_s,duracao_ate_drenar_s,lat_p50_ms,lat_p95_ms,lat_p99_ms,lat_p99_todas_ms,lote_medio,retries,perdidos_servidor,registros,corretos,erros_de_carga,erros_de_integridade,acerto_gabarito,disponibilidade,integridade,taxa_erro_integridade,erros_de_integridade_sem_ordem,sem_erros,n_divergente:ordem_invertida,ok_carga,ok_integridade,n_divergente:saida_antes_da_entrada,n_processado_sem_confirmacao,n_recusado:fila_cheia,n_timeout
+lote_1000,4042,100,2,4,100.0,2.2,True,False,True,True,True,,60.1,60.6,0.8,1.0,1.2,1.2,10.9,0,0,5931,5927,0,4,0.999326,1.0,0.999326,0.00067442,0,False,4,True,False,0,0,0,0
+lote_1000,4042,250,2,4,250.0,1.2,True,False,True,True,True,,60.4,60.4,0.5,0.7,0.9,0.9,25.9,0,0,14857,14857,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,500,2,4,499.9,1.5,True,False,True,True,True,,60.7,60.7,0.4,0.6,0.8,0.8,52.4,0,0,29702,29702,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,1000,2,4,999.7,1.1,True,False,True,True,True,,61.5,61.5,0.4,0.6,1.0,1.0,108.1,0,0,59432,59432,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,1250,2,4,1249.4,1.1,True,False,True,True,True,,61.7,61.7,0.4,0.6,1.3,1.3,137.5,0,0,74248,74248,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,1500,2,4,1499.1,1.1,True,False,True,True,True,,62.4,62.4,0.4,0.6,1.5,1.5,168.6,0,0,89170,89170,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,1750,2,4,1748.8,1.1,True,False,True,True,True,,62.9,62.9,0.4,0.7,3.0,3.0,201.2,0,0,104011,104011,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,2000,2,4,1998.4,1.1,True,False,True,True,True,,63.1,63.1,0.4,1.0,5.3,5.3,234.8,0,0,118814,118814,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,2500,2,4,2497.4,1.2,True,False,True,True,True,,64.2,64.2,0.4,5.3,10.0,10.0,314.2,0,0,148632,148632,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,3000,2,4,2996.1,11.0,True,False,True,True,True,,64.8,64.8,0.5,23.7,56.6,56.6,425.7,0,0,178350,178350,0,0,1.0,1.0,1.0,0.0,0,True,0,True,True,0,0,0,0
+lote_1000,4042,4000,2,4,3992.9,115.5,False,False,True,True,False,gerador_atrasou,66.4,66.4,0.7,134.9,213.0,213.0,662.2,0,0,237744,237736,0,8,0.999966,1.0,0.999966,3.365e-05,0,False,8,True,True,0,0,0,0
+lote_1000,4042,6000,2,4,5904.7,628.6,False,True,True,True,True,,72.6,72.6,52.8,1829.0,4225.3,6115.4,918.6,0,0,356346,151274,203601,1471,0.34686,0.428642,0.99037,0.00963043,1421,False,50,False,False,1421,8927,161636,33038

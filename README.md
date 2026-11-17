@@ -112,7 +112,7 @@ O desenho completo e o **registro de todas as correções** feitas ao longo do t
 - Testes: 63 em Python (pytest) e 16 em Elixir (ExUnit), sem banco (`make testes`); gerador de carga em vários processos validado na máquina de desenvolvimento (cumpre a agenda até 6000 req/s).
 - Versão Elixir: compila sem avisos e passa no teste de contrato, como as duas versões Python (`make contrato`).
 - **Experimento 1** (nov/2026, servidor de 4 núcleos, 5 repetições): concluído e arquivado em [`experimento_1/`](experimento_1/README.md), com os resultados preliminares, os logs e os defeitos que ele revelou (C16), já corrigidos.
-- **Experimento 2**: a execução final, com C16; ver [`docs/vm.md`](docs/vm.md).
+- **Experimento 2** (16–17/nov/2026, mesmo servidor, 5 repetições, commit `2fe8ae5`): a execução final, com C16 e C17; concluído e arquivado em [`experimento_2/`](experimento_2/README.md), com os resultados do artigo, os logs da API e a explicação da saturação do Elixir no baseline.
 - `exemplo/`: resultados de uma execução **anterior** às correções metodológicas; servem para mostrar a evolução do método, não como resultado final.
 
 ---
@@ -346,6 +346,7 @@ compose.*.yml              trocam o serviço api pela versão imperativa ou Elix
 docs/metodologia.md        hipóteses, métodos e registro de correções
 exemplo/                   resultados de uma execução anterior às correções metodológicas
 experimento_1/             1ª execução completa (resumos, logs, figuras, reanálise C16)
+experimento_2/             execução final (resumos, logs da API, figuras; resultados do artigo)
 tests/                     pytest + Hypothesis
 ```
 

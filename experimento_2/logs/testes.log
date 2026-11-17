@@ -1,0 +1,90 @@
+docker compose -f docker-compose.yml -f compose.4cpu.yml run --rm --no-deps --entrypoint pytest carga -q
+ Network ponto-funcional_default  Creating
+ Network ponto-funcional_default  Created
+...............................................................          [100%]
+=============================== warnings summary ===============================
+src/ponto_imperativo/api.py:298
+  /app/src/ponto_imperativo/api.py:298: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4723
+../usr/local/lib/python3.12/site-packages/fastapi/applications.py:4723
+  /usr/local/lib/python3.12/site-packages/fastapi/applications.py:4723: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)  # ty: ignore[deprecated]
+
+src/ponto_imperativo/api.py:315
+  /app/src/ponto_imperativo/api.py:315: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("shutdown")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+63 passed, 4 warnings in 6.31s
+docker compose -f docker-compose.yml -f compose.4cpu.yml -f compose.elixir.yml run --rm --no-deps -e MIX_ENV=test --entrypoint mix api test
+==> mime
+Compiling 1 file (.ex)
+Generated mime app
+==> plug_crypto
+Compiling 5 files (.ex)
+Generated plug_crypto app
+==> hpax
+Compiling 4 files (.ex)
+Generated hpax app
+==> decimal
+Compiling 4 files (.ex)
+Generated decimal app
+==> jason
+Compiling 10 files (.ex)
+Generated jason app
+==> ponto
+===> Analyzing applications...
+===> Compiling telemetry
+==> db_connection
+Compiling 18 files (.ex)
+Generated db_connection app
+==> thousand_island
+Compiling 18 files (.ex)
+Generated thousand_island app
+==> plug
+Compiling 1 file (.erl)
+Compiling 42 files (.ex)
+Generated plug app
+warning: "xref: [exclude: ...]" in your mix.exs file is deprecated, instead use: "elixirc_options: [no_warn_undefined: ...]"
+  (mix 1.20.3) lib/mix/tasks/compile.elixir.ex:243: Mix.Tasks.Compile.Elixir.xref_exclude_opts/2
+  (mix 1.20.3) lib/mix/tasks/compile.elixir.ex:142: Mix.Tasks.Compile.Elixir.run/1
+  (mix 1.20.3) lib/mix/task.ex:502: anonymous fn/3 in Mix.Task.run_task/5
+  (mix 1.20.3) lib/mix/task.compiler.ex:299: Mix.Task.Compiler.run_compiler/2
+  (mix 1.20.3) lib/mix/task.compiler.ex:287: Mix.Task.Compiler.run/4
+  (mix 1.20.3) lib/mix/tasks/compile.all.ex:75: Mix.Tasks.Compile.All.do_run/2
+
+==> postgrex
+Compiling 70 files (.ex)
+Generated postgrex app
+==> websock
+Compiling 1 file (.ex)
+Generated websock app
+==> bandit
+Compiling 54 files (.ex)
+Generated bandit app
+==> ponto
+Compiling 7 files (.ex)
+Generated ponto app
+Running ExUnit with seed: 832728, max_cases: 2
+
+................
+Finished in 0.2 seconds (0.07s async, 0.1s sync)
+
+Result: 16 passed

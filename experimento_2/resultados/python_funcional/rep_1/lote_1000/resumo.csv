@@ -1,0 +1,12 @@
+cenario,seed,taxa_alvo,processos_gerador,perfil_cpu,taxa_obtida,atraso_gerador_p99_ms,gerador_valido,api_saturou,drenou,api_sem_reinicio,degrau_valido,incidente,duracao_envio_s,duracao_ate_drenar_s,lat_p50_ms,lat_p95_ms,lat_p99_ms,lat_p99_todas_ms,lote_medio,retries,perdidos_servidor,registros,corretos,erros_de_carga,erros_de_integridade,acerto_gabarito,disponibilidade,integridade,taxa_erro_integridade,erros_de_integridade_sem_ordem,sem_erros,ok_carga,ok_integridade,n_divergente:ordem_invertida
+lote_1000,1042,100,2,4,100.0,2.2,True,False,True,True,True,,60.3,60.8,0.8,1.0,1.2,1.2,10.6,0,0,5950,5950,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,250,2,4,250.0,1.2,True,False,True,True,True,,60.5,60.5,0.5,0.8,1.0,1.0,25.9,0,0,14865,14865,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,500,2,4,499.9,1.6,True,False,True,True,True,,60.7,60.7,0.5,0.6,1.0,1.0,52.6,0,0,29700,29700,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,1000,2,4,999.3,1.1,True,False,True,True,True,,61.5,61.5,0.4,0.6,1.3,1.3,108.5,0,0,59452,59452,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,1250,2,4,1249.4,1.1,True,False,True,True,True,,62.0,62.0,0.4,0.7,2.0,2.0,138.3,0,0,74263,74263,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,1500,2,4,1499.1,1.1,True,False,True,True,True,,62.5,62.5,0.4,0.7,2.7,2.7,168.5,0,0,89138,89138,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,1750,2,4,1748.8,1.1,True,False,True,True,True,,62.8,62.8,0.4,1.1,6.0,6.0,202.4,0,0,104041,104041,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,2000,2,4,1998.2,1.1,True,False,True,True,True,,63.6,63.6,0.4,3.0,7.4,7.4,239.5,0,0,118795,118795,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,2500,2,4,2497.3,1.2,True,False,True,True,True,,64.0,64.0,0.5,9.6,17.3,17.3,323.8,0,0,148614,148614,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,3000,2,4,2996.0,30.8,False,False,True,True,False,gerador_atrasou,64.8,64.8,0.6,60.3,107.3,107.3,460.5,0,0,178209,178209,0,0,1.0,1.0,1.0,0.0,0,True,True,True,0
+lote_1000,1042,4000,2,4,3992.5,137.6,False,False,True,True,False,gerador_atrasou,67.0,67.0,4.6,186.8,292.3,292.3,747.2,0,0,237619,237609,0,10,0.999958,1.0,0.999958,4.208e-05,0,False,True,True,10
