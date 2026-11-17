@@ -6,7 +6,7 @@ Guia para executar a suíte completa numa máquina virtual Linux (nuvem ou local
 
 ## 1. Tamanho da VM
 
-Os contêineres têm limites fixos de CPU. A VM precisa ter **pelo menos esses núcleos, mais folga** para o sistema e o Docker.
+Os contêineres têm limites fixos de CPU. Com 8 ou mais núcleos (perfil `compose.cpuset.yml`):
 
 | Contêiner | CPUs | Memória |
 |---|---|---|
@@ -15,15 +15,17 @@ Os contêineres têm limites fixos de CPU. A VM precisa ter **pelo menos esses n
 | Gerador de carga | 4 (`CARGA_CPUS`) | ~1–2 GB nos degraus altos |
 | **Total** | **7** | ~4 GB |
 
+Com 4 a 7 núcleos, o Makefile usa sozinho o perfil `compose.4cpu.yml` (banco 1, API 1, gerador 2 em 2 processos; C15), que foi o do experimento 1. Ver a seção 3.
+
 | Configuração | vCPUs | RAM | Disco | Observação |
 |---|---|---|---|---|
 | **Recomendada** | **8–12** | **16 GB** | 40 GB SSD | suíte completa sem ajustes |
 | Mínima | 8 | 8 GB | 30 GB | sem folga: feche tudo o mais |
-| Reduzida | 4 | 8 GB | 30 GB | `CARGA_CPUS=1 GERADOR_PROCESSOS=1` e `--escala 0.5`; **não** compare com execuções na configuração padrão |
+| 4 núcleos | 4 | 8 GB | 30 GB | perfil `compose.4cpu.yml` (automático pelo `make`); teto absoluto menor; **não** compare números absolutos com execuções no perfil de 8 |
 
 Na nuvem, prefira **vCPUs dedicadas** (não as "burstable"/compartilhadas: t3/t4g na AWS, B-series na Azure, e2-micro/small no GCP). Com vCPU compartilhada, o *CPU steal* do hipervisor contamina a latência.
 
-> Se a VM tiver menos núcleos que algum `cpus:` do compose, o Docker recusa subir o contêiner ("range of CPUs is from 0.01 to N"). Reduza `CARGA_CPUS` nesse caso.
+> Se a VM tiver menos núcleos que algum `cpus:` do compose, o Docker recusa subir o contêiner ("range of CPUs is from 0.01 to N"). Pelo `make` isso não acontece, porque o perfil segue o número de núcleos; com `docker compose` direto, reduza `CARGA_CPUS`.
 
 ---
 
@@ -90,7 +92,7 @@ perfis), mas o teto absoluto cai: o banco tem 1 CPU e o gerador só sustenta a t
 
 ## 4. Rodar a suíte completa
 
-A execução completa é **longa**. Estimativa com os padrões (5 repetições × degraus de 60 s):
+A execução completa é **longa**. Estimativa com os padrões (5 repetições × degraus de 60 s; rampa de 12 degraus, de 100 a 6000 req/s, com 1250, 1750 e 2500 desde C17; 13 cenários por suíte):
 
 | Etapa | Duração aproximada |
 |---|---|
@@ -122,6 +124,7 @@ make rodar-uma IMPL=python_imperativo REP=2   # e assim por diante
 make figuras-comparacao
 ```
 
+Um degrau que falha na execução (portas esgotadas, conexão recusada) é repetido uma vez depois de 60 s (C16).
 Se a API cair ou a fila não esvaziar, a suíte **não para**: o degrau entra como inválido, com o
 motivo na coluna `incidente`, e aparece na seção *Validade da execução* de
 `figuras/comparacao/comparacao.md` e na figura `figuras/comparacao/validade.png`. Inclua as duas no artigo.

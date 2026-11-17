@@ -101,9 +101,9 @@ Independentes: implementação, modo (baseline/lote), tamanho do lote, taxa de r
 Dependentes: limite de taxa (por três critérios: carga, integridade e estrito), latência p50/p95/p99 (com e sem timeouts), disponibilidade, integridade e contagem por categoria de erro.
 Controladas: mesmo contrato HTTP, SQL, dados, gerador de carga e limites de CPU com núcleos dedicados (API 1; banco 2 e gerador 4 em 4 processos com 8+ núcleos, ou banco 1 e gerador 2 em 2 processos com 4 núcleos); um único consumidor da fila; um escalonador na BEAM.
 
-**Rigor.** gerador de carga em 4 processos (cumpre a agenda até cerca de 6000 req/s); 5 repetições com sementes diferentes (mediana [mín–máx]); degraus de 60 s; calibração do gerador e descarte dos degraus em que ele atrasou (> 20 ms p99); tolerância explícita para erros de integridade (10⁻⁴).
+**Rigor.** gerador de carga em 4 processos (cumpre a agenda até cerca de 6000 req/s); 5 repetições com sementes diferentes (mediana [mín–máx]); rampa de 12 degraus de 60 s, de 100 a 6000 req/s, mais densa entre 1000 e 2500 (C17); calibração do gerador e descarte dos degraus em que ele atrasou (> 20 ms p99); tolerância explícita para erros de integridade (10⁻⁴).
 
-**Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos, falha simulada em vez de queda real. Ver [Limitações](#limitações-ameaças-à-validade).
+**Ameaças à validade.** Compressão de tempo (um dia enviado em segundos), uma única máquina, dados sintéticos; a queda do banco é simulada na API na maior parte dos cenários e validada contra uma queda real do Postgres em três deles (C17). Ver [Limitações](#limitações-ameaças-à-validade).
 
 O desenho completo e o **registro de todas as correções** feitas ao longo do trabalho (bugs B1–B5 e correções de método C1–C17, com o problema, a evidência e o que mudou) estão em [`docs/metodologia.md`](docs/metodologia.md), que começa com uma tabela de **tudo o que foi redefinido** em relação à versão original. As correções fazem parte do resultado: várias só apareceram porque o núcleo puro, o oráculo e os testes de propriedade tornaram os erros visíveis.
 
@@ -223,7 +223,15 @@ Para cada taxa da rampa (`ponto.carga.experimento`):
 4. espera a fila esvaziar;
 5. lê o banco e reconcilia cada registro.
 
-A rampa para depois de dois degraus seguidos reprovados (em carga, em integridade ou por atraso do gerador).
+Taxas da rampa (req/s), as mesmas para `baseline` e para os três tamanhos de lote:
+
+```
+100  250  500  1000  1250  1500  1750  2000  2500  3000  4000  6000
+```
+
+Os degraus de 1250, 1750 e 2500 entraram depois do experimento 1 (C17): o baseline satura entre 1000 e 1500 e o lote entre 2000 e 3000, e com passos de 500 as diferenças entre implementações sumiam. Cada degrau dura 60 s na comparação do artigo (`--duracao-suite 60`, padrão do `make comparacao`) e 20 s sem essa opção; os cenários de falha rodam só a 500 req/s, com duração própria (30 a 55 s).
+
+A rampa para depois de dois degraus seguidos reprovados (em carga, em integridade ou por atraso do gerador). Um degrau que falha na execução (portas esgotadas, conexão recusada) é repetido uma vez depois de 60 s, se a API continuar de pé, tempo para as portas em TIME_WAIT do degrau anterior voltarem (C16).
 
 ### Cenários da suíte padrão
 
@@ -237,7 +245,7 @@ A rampa para depois de dois degraus seguidos reprovados (em carga, em integridad
 | `falha_baseline_com_retry`, `falha_baseline_sem_retry` | a mesma queda no modo baseline (grupo de comparação de durabilidade) |
 | `falha_real_com_retry`, `falha_real_sem_retry`, `falha_real_baseline_sem_retry` | queda **real** de 10 s: o Postgres encerra as conexões da API e recusa novas (valida a falha simulada) |
 
-A falha é simulada pela API (`POST /admin/falha`), então funciona em qualquer máquina. Também é possível derrubar o banco de verdade durante um teste com `docker compose stop db` e `docker compose start db`.
+Nos seis primeiros cenários de falha a queda é simulada pela API (`POST /admin/falha`), então funciona em qualquer máquina. Nos cenários `falha_real_*` (C17) a queda é real: o Postgres encerra as conexões da API e recusa novas por 10 s, o que valida a simulação contra os erros de verdade do driver (transação cortada, pool quebrado).
 
 ### Taxonomia de erros
 
@@ -345,7 +353,7 @@ tests/                     pytest + Hypothesis
 
 Variáveis do serviço `api` no `docker-compose.yml`: `MODO`, `TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `CONSUMIDORES`, `POOL_MAX`. Os quatro primeiros também mudam em execução por `POST /admin/config`.
 
-Os contêineres têm limite de CPU e memória (API: 1 CPU; banco: 2 CPUs; gerador de carga: 4 CPUs, em 4 processos; total 7 núcleos) para que os resultados sejam comparáveis entre máquinas.
+Os contêineres têm limite de CPU e memória (com 8 ou mais núcleos: API 1 CPU, banco 2, gerador de carga 4 em 4 processos, total 7 núcleos; com 4 a 7 núcleos: API 1, banco 1, gerador 2 em 2 processos) para que os resultados sejam comparáveis entre máquinas.
 
 ## Limitações (ameaças à validade)
 

@@ -23,7 +23,7 @@ testes:         ## testes unitários e de propriedades (sem banco)
 dados:          ## gera base sintética de 40 mil servidores em ./dados
 	$(RODAR) ponto.dados.gerador --servidores 40000 --saida dados
 
-experimento:    ## suíte completa do artigo (~15-25 min)
+experimento:    ## suíte padrão, uma implementação, degraus de 20 s (~40-60 min)
 	$(RODAR) ponto.carga.experimento --suite padrao
 
 rapido:         ## rampa curta para conferir o ambiente (~2 min)

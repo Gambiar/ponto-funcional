@@ -79,7 +79,7 @@ Regras de negócio: um registro por servidor, tipo e dia (os demais são `descar
 | `python_funcional` | `src/ponto/` | núcleo puro (`nucleo/`: dataclasses congeladas, `match`, closures, `reduce`, recursão logarítmica) + casca imperativa (`casca/`). Retry e falha simulada como decoradores. |
 | `elixir` | `elixir/` | núcleo puro em `Ponto.Nucleo`; fila como processo `GenServer` com estado imutável; retry, falha e tradução de erros compostos com `\|>`; contadores atômicos; Bandit + Postgrex. |
 
-Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e SQL, limites de contêiner (API 1 CPU, banco 2 CPUs, gerador de carga 4 CPUs), parâmetros (`TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `POOL_MAX`) e **um único consumidor** da fila (`CONSUMIDORES=1`; as versões imperativa e Elixir não leem essa variável). A BEAM roda com `+S 1:1` (um escalonador), equivalente ao processo único do Uvicorn.
+Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e SQL, limites de contêiner (API 1 CPU nos dois perfis; banco 2 CPUs e gerador 4 com 8+ núcleos, ou banco 1 e gerador 2 com 4 núcleos, C15), parâmetros (`TAMANHO_LOTE`, `ESPERA_MS`, `TENTATIVAS`, `FILA_CAPACIDADE`, `POOL_MAX`) e **um único consumidor** da fila (`CONSUMIDORES=1`; as versões imperativa e Elixir não leem essa variável). A BEAM roda com `+S 1:1` (um escalonador), equivalente ao processo único do Uvicorn.
 
 ---
 
@@ -102,7 +102,7 @@ Fixos entre as implementações: endpoints HTTP e corpos de resposta, esquema e 
 
 - **Taxa constante:** o agendamento usa a posição na lista, não o horário do registro (ver C10).
 - **Validade do gerador:** cada degrau registra o atraso p99 entre o horário agendado e o envio real. Acima de 20 ms (`--atraso-max`), o degrau é marcado `gerador_valido=False` e não conta para o limite (C3).
-- **Vários processos (C12):** a agenda é calculada uma vez e repartida entre `GERADOR_PROCESSOS` processos (padrão 4) que partem do mesmo instante zero. A repartição é por servidor, então os registros de um servidor saem sempre do mesmo processo e na ordem, como viriam do mesmo relógio de ponto.
+- **Vários processos (C12):** a agenda é calculada uma vez e repartida entre `GERADOR_PROCESSOS` processos (padrão 4; 2 no perfil de 4 núcleos) que partem do mesmo instante zero. A repartição é por servidor, então os registros de um servidor saem sempre do mesmo processo e na ordem, como viriam do mesmo relógio de ponto.
 - **Calibração:** `make calibrar` mede, contra um servidor nulo (`eco`), a taxa máxima que o gerador sustenta. Esse teto deve ser reportado no artigo.
 
 ---
@@ -118,7 +118,9 @@ Para cada cenário e taxa (`ponto.carga.experimento`):
 5. espera a fila esvaziar;
 6. lê a tabela `eventos` (um desfecho por evento) e reconcilia cada registro.
 
-A rampa para depois de 2 degraus seguidos reprovados (em carga, integridade ou validade do gerador).
+Taxas da rampa (`baseline` e os três lotes): 100, 250, 500, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 4000 e 6000 req/s. Os degraus de 1250, 1750 e 2500 entraram depois do experimento 1 (C17). Cada degrau dura 60 s na execução do artigo e 20 s por padrão; os cenários de falha rodam só a 500 req/s.
+
+A rampa para depois de 2 degraus seguidos reprovados (em carga, integridade ou validade do gerador). Um degrau que falha na execução (portas esgotadas, conexão recusada) é repetido uma vez depois de 60 s, se a API continuar de pé (C16). Se o gerador atrasou porque a API já tinha saturado (≥ 1% de erros de carga), o degrau é válido e reprovado (`api_saturou`, C17).
 
 ---
 
@@ -167,8 +169,8 @@ O limite de um cenário é a maior taxa antes do primeiro degrau reprovado, cons
 
 | Cenário | Modo | Taxas (req/s) | Falha | Tentativas | Objetivo |
 |---|---|---|---|---|---|
-| `baseline` | baseline | 100 → 6000 | — | 8 | referência sem fila |
-| `lote_50`, `lote_200`, `lote_1000` | lote | 100 → 6000 | — | 8 | efeito do tamanho do lote |
+| `baseline` | baseline | 100 → 6000 (12 degraus, §5) | — | 8 | referência sem fila |
+| `lote_50`, `lote_200`, `lote_1000` | lote | 100 → 6000 (12 degraus, §5) | — | 8 | efeito do tamanho do lote |
 | `falha_com_retry` | lote | 500 | 10 s a partir de 5 s | 8 | recuperação com retry |
 | `falha_sem_retry` | lote | 500 | 10 s | 1 | perda sem retry |
 | `falha_com_retry_20s`, `_30s` | lote | 500 | 20 s, 30 s | 8 | onde o retry deixa de bastar (C8) |
@@ -178,11 +180,12 @@ O limite de um cenário é a maior taxa antes do primeiro degrau reprovado, cons
 Execução completa para o artigo:
 
 ```bash
-make calibrar                                   # teto do gerador
-# para cada implementação (ver README, "Comparação entre implementações"):
-docker compose run --rm --no-deps carga ponto.carga.experimento \
-    --suite padrao --repeticoes 5 --duracao-suite 60 --saida resultados/<impl>
-docker compose run --rm --no-deps carga ponto.analise.comparar
+make comparacao      # ambiente, construir, contrato, calibrar, 5 repetições × degraus de 60 s
+                     # intercaladas entre as implementações (C13, C14) e as figuras
+# ou uma repetição por vez (ver docs/vm.md):
+make rodar-uma IMPL=python_funcional REP=1
+make figuras-comparacao
+make metricas        # métricas de código (H1)
 ```
 
 ---
@@ -192,7 +195,7 @@ docker compose run --rm --no-deps carga ponto.analise.comparar
 - **Limites:** mediana entre repetições, com mínimo e máximo (`ponto.analise.comparar`), para cada critério separadamente.
 - **Latência:** curva p99 × taxa, com a mediana das repetições, em escala log. Reportar também `lat_p99_todas_ms`. A tabela "Latência p99" do `comparacao.md` dá mediana [mín–máx] por implementação nos degraus válidos e sem erro de carga, com o p do teste de Mann-Whitney exato entre imperativo × funcional (H1) e funcional × Elixir (H2) (C17).
 - **Erros:** contagem por categoria e componente (`mapa_de_erros.png`).
-- **Código (H1):** linhas de código, complexidade ciclomática e número de pontos de mutação compartilhada por implementação. Ferramentas sugeridas: `radon` para Python e `mix credo` ou contagem manual para Elixir.
+- **Código (H1):** linhas de código, complexidade ciclomática e número de pontos de mutação compartilhada por implementação. Medidas por `make metricas` em `figuras/comparacao/codigo.md` (C17).
 - Diferenças menores que a dispersão entre repetições **não** devem ser interpretadas.
 
 ---
@@ -234,8 +237,8 @@ docker compose run --rm --no-deps carga ponto.analise.comparar
 ### 9.3 Limitações conhecidas (ameaças à validade)
 
 - **Oráculo e sistema compartilham as regras** (`regras_padrao`) na versão funcional: um bug de regra não aparece no esperado ajustado, só em `acerto_gabarito`. Para as versões imperativa e Elixir, o oráculo é independente.
-- **Falha simulada** dentro da API, e não queda real do banco. Recomenda-se ao menos uma execução com `docker compose stop db` (erros de pool e transação interrompida).
-- **Uma única máquina:** os limites de CPU somam 7 núcleos (máquina de desenvolvimento: 12 núcleos lógicos, 16 GB) dentro da VM do Docker Desktop (WSL2). Reportar CPU, RAM e configuração do WSL.
+- **Falha simulada** dentro da API na maior parte dos cenários de queda. A queda real do Postgres (`falha_real_*`, C17) cobre só a de 10 s a 500 req/s; as quedas de 20 s e 30 s são só simuladas.
+- **Uma única máquina:** gerador, API e banco no mesmo hardware. O servidor de medição tem 4 núcleos (perfil `compose.4cpu.yml`, C15): banco com 1 CPU e nenhum núcleo livre para o sistema, o que baixa o teto absoluto, mas não afeta a comparação entre implementações (a API tem 1 CPU nos dois perfis). Reportar o `resultados/ambiente.txt`.
 - **Ordem fixa dos degraus**, do menor para o maior, sem reiniciar a API: há efeito de aquecimento, pequeno.
 - **Dados sintéticos** num único dia; não exercitam virada de dia nem múltiplos dias.
 - **Um processo na API:** a fila vive na memória, e um 202 se perde se o processo cair (vale para as três implementações).
